@@ -1,22 +1,14 @@
-import { INestApplication } from '@nestjs/common';
-import { Test } from '@nestjs/testing';
+import { NestExpressApplication } from '@nestjs/platform-express';
 import request from 'supertest';
-import { App } from 'supertest/types';
-import { AppModule } from '../src/app.module';
-import { configureApp } from '../src/app.setup';
+import { createTestApp } from './create-test-app';
 
 const FRONTEND_ORIGIN = 'http://localhost:5173';
 
 describe('CORS', () => {
-  let app: INestApplication<App>;
+  let app: NestExpressApplication;
 
   beforeAll(async () => {
-    const moduleRef = await Test.createTestingModule({
-      imports: [AppModule],
-    }).compile();
-    app = moduleRef.createNestApplication();
-    configureApp(app);
-    await app.init();
+    app = await createTestApp();
   });
 
   afterAll(async () => {
