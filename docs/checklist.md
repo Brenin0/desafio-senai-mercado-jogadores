@@ -927,6 +927,9 @@ O enunciado manda decidir e registrar no README (Premissas, "Detalhes não defin
 que nenhuma verificação depende dessas escolhas (3.3 e 3.4). **Tudo abaixo é proposta, ainda não
 aprovada.** Depois do seu ok, as aprovadas vão para "Decisões e premissas" do README.
 
+**Adotadas na Fase 1** e já registradas no README: D02, D03, D04, D17, D18, D19, D21 (com o banco na porta
+5433 do computador), DF13 e DF14.
+
 ### Backend
 
 | # | Ponto em aberto | O que o enunciado diz | Proposta |
