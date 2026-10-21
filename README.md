@@ -34,9 +34,12 @@ docker compose up -d --wait db
 cd backend
 cp .env.example .env
 npm ci
+npm run db:migrate
 npm run build
 npm run start:prod
 ```
+
+O `npm run db:migrate` cria as tabelas no banco (veja [Banco de dados](#banco-de-dados)).
 
 Origem da API: **`http://localhost:3000`** (as rotas ficam em `/api/v1`).
 
@@ -51,6 +54,30 @@ npm run dev
 
 URL do frontend: **`http://localhost:5173`**
 
+## Banco de dados
+
+O banco é o PostgreSQL 16 do `docker-compose.yml`. As tabelas são criadas pelas migrations versionadas em
+`backend/prisma/migrations`. O banco criado ou recriado por estes passos começa vazio, sem jogadores,
+clubes, transações nem partidas.
+
+**Criar** (são os passos 1 e 2 de "Como executar", a partir da raiz do repositório):
+
+```bash
+docker compose up -d --wait db
+cd backend
+cp .env.example .env
+npm ci
+npm run db:migrate
+```
+
+**Recriar do zero** (com o banco no ar, a partir da raiz do repositório). Apaga todos os dados, cria as
+tabelas de novo pelas migrations e deixa o banco vazio:
+
+```bash
+cd backend
+npm run db:reset
+```
+
 ## Variáveis de ambiente
 
 Cada pasta tem um `.env.example`, que o passo a passo acima copia para `.env`.
@@ -59,6 +86,7 @@ Cada pasta tem um `.env.example`, que o passo a passo acima copia para `.env`.
 | --- | --- | --- | --- |
 | `PORT` | `backend` | `3000` | Porta HTTP da API. |
 | `FRONTEND_ORIGIN` | `backend` | `http://localhost:5173` | Única origem liberada no CORS, sem caminho e sem barra no final. Obrigatória: sem ela, a API não sobe e diz o motivo. |
+| `DATABASE_URL` | `backend` | `postgresql://passe:passe@localhost:5433/passe?schema=public` | Conexão do Prisma com o PostgreSQL do `docker-compose.yml`, na porta 5433 do computador. |
 | `VITE_API_URL` | `frontend` | `http://localhost:3000` | Origem da API, sem `/api/v1` (o frontend acrescenta). Se faltar, o frontend usa `http://localhost:3000`. |
 
 ## Testes, lint, documentação da API e logs
@@ -97,6 +125,9 @@ npm run format:check   # Prettier; só verifica, sem alterar arquivos
 │   │   ├── app.module.ts
 │   │   ├── app.setup.ts     configuração única da aplicação: prefixo, CORS, validação, erros e Swagger
 │   │   └── main.ts
+│   ├── prisma/
+│   │   ├── schema.prisma    as 7 tabelas do banco
+│   │   └── migrations/      migrations versionadas, aplicadas por db:migrate e db:reset
 │   └── test/                testes das respostas HTTP (e2e)
 ├── frontend/                interface web (React e Vite)
 │   └── src/
@@ -123,6 +154,8 @@ PostgreSQL 16.
 | `@nestjs/config` | Lê o `.env` e valida as variáveis de ambiente na subida. |
 | `class-validator`, `class-transformer` | Validação declarativa da entrada da API e das variáveis de ambiente. |
 | `@nestjs/swagger` | Documentação interativa da API em `/api/docs`. |
+| `prisma` | ORM: descreve as tabelas em `prisma/schema.prisma`, gera as migrations e as aplica (`db:migrate` e `db:reset`). |
+| `@prisma/client` | Acesso da API ao banco, gerado a partir do schema durante o `npm ci`. |
 | `@nestjs/cli`, `@nestjs/schematics` | Build e execução do NestJS (`nest build` e `nest start`). |
 | `typescript` | Linguagem do projeto. |
 | `jest`, `ts-jest`, `@nestjs/testing` | Testes automatizados. |
@@ -165,6 +198,18 @@ Detalhes que o enunciado deixou à escolha do candidato:
   - API na `3000`;
   - frontend na `5173` fixa: se a porta estiver ocupada, o Vite para em vez de trocar de porta;
   - banco na `5433` do computador, para não conflitar com um PostgreSQL instalado localmente na `5432`.
+- **Banco de dados:**
+  - tabelas e colunas com os nomes exatos do enunciado; no código, modelos e campos em inglês, ligados a
+    esses nomes pelo `@@map` e pelo `@map` do Prisma;
+  - nome único do clube (RN10): coluna extra `clubes.nome_normalizado`, com índice único, que guarda o nome
+    depois da V4 e em minúsculas, mantendo os acentos ("Águias FC" e "águias fc" colidem; "Aguias FC" não);
+    é `TEXT`, e não `VARCHAR(60)`, porque passar para minúsculas pode aumentar o texto (o "İ" vira 2
+    caracteres);
+  - índice único extra em `duelos_partida` (`partida_id`, `ordem`): uma partida não tem dois duelos com o
+    mesmo número;
+  - valores de lista (posição, condição, situação do contrato, tipo da transação, formação e atributo do
+    duelo) gravados como texto, nos tamanhos do enunciado, sem tipo enum do PostgreSQL;
+  - o `db:reset` usa `--skip-seed`, para o banco recriado nascer sempre vazio.
 - **Frontend:**
   - o endereço inicial (`/`) abre a lista de jogadores;
   - uma consulta que falha por rede ou por erro do servidor é repetida uma vez;
