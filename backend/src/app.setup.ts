@@ -7,6 +7,7 @@ import { createRequestLogger } from './common/middlewares/request-logger.middlew
 import { BodyMustBeObjectPipe } from './common/pipes/body-must-be-object.pipe';
 import { createValidationPipe } from './common/pipes/validation.pipe';
 import { EnvironmentVariables } from './config/environment';
+import { setupSwagger } from './config/swagger';
 
 const API_PREFIX = 'api/v1';
 
@@ -21,4 +22,5 @@ export function configureApp(app: NestExpressApplication): void {
   app.use(rejectInvalidJson);
   app.useGlobalPipes(new BodyMustBeObjectPipe(), createValidationPipe());
   app.useGlobalFilters(new AllExceptionsFilter());
+  setupSwagger(app);
 }
