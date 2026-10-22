@@ -65,3 +65,25 @@ export function matchesSearch(name: string, search: string): boolean {
 export function normalizeClubName(name: string): string {
   return normalizeSpaces(name).toLowerCase();
 }
+
+/**
+ * Limites, `acronym`: as letras da sigla aparecem no nome nessa ordem, sem diferenciar maiúsculas,
+ * minúsculas e acentos, e a primeira delas é a primeira letra do nome.
+ */
+export function acronymFitsName(acronym: string, name: string): boolean {
+  const nameLetters = Array.from(foldCaseAndAccents(name)).filter((character) =>
+    /\p{L}/u.test(character),
+  );
+  const [first, ...rest] = Array.from(acronym.toLowerCase());
+  if (nameLetters[0] !== first) {
+    return false;
+  }
+  let position = 1;
+  for (const letter of rest) {
+    position = nameLetters.indexOf(letter, position) + 1;
+    if (position === 0) {
+      return false;
+    }
+  }
+  return true;
+}

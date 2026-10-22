@@ -1,4 +1,5 @@
 import {
+  acronymFitsName,
   compareByNameAndId,
   compareNames,
   countCharacters,
@@ -155,5 +156,28 @@ describe('RN10 – nome normalizado do clube: V4 e minúsculas, mantendo os acen
     ['Aguias FC', 'aguias fc'],
   ])('"%s" → "%s"', (name, expected) => {
     expect(normalizeClubName(name)).toBe(expected);
+  });
+});
+
+describe('Limites – sigla: as 3 letras aparecem no nome nessa ordem, a primeira sendo a primeira letra', () => {
+  it.each(['AGU', 'AFC', 'ASC'])('%s serve para "Águias FC"', (acronym) => {
+    expect(acronymFitsName(acronym, 'Águias FC')).toBe(true);
+  });
+
+  it.each([
+    ['GFC', 'não começa pela primeira letra do nome'],
+    ['ACF', 'as letras estão fora de ordem'],
+    ['AGX', 'X não aparece no nome'],
+    ['AUU', 'só há um U depois do A'],
+  ])('%s não serve para "Águias FC": %s', (acronym) => {
+    expect(acronymFitsName(acronym, 'Águias FC')).toBe(false);
+  });
+
+  it('compara sem acentos e sem caixa, inclusive a cedilha: "Ação Clube" aceita ACC', () => {
+    expect(acronymFitsName('ACC', 'Ação Clube')).toBe(true);
+  });
+
+  it('a primeira letra é a primeira da categoria L, depois de pontos e hífens', () => {
+    expect(acronymFitsName('FCR', 'F.C. Recife')).toBe(true);
   });
 });
