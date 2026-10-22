@@ -2,6 +2,7 @@ import { plainToInstance } from 'class-transformer';
 import { IsInt, Matches, Max, Min, validateSync } from 'class-validator';
 
 const ORIGIN_PATTERN = /^https?:\/\/[^/\s]+$/;
+const POSTGRES_URL_PATTERN = /^postgres(ql)?:\/\/\S+$/;
 
 export class EnvironmentVariables {
   @IsInt({ message: 'PORT deve ser um número inteiro' })
@@ -14,6 +15,12 @@ export class EnvironmentVariables {
       'FRONTEND_ORIGIN deve ser uma origem como http://localhost:5173, sem caminho e sem barra no final',
   })
   FRONTEND_ORIGIN!: string;
+
+  @Matches(POSTGRES_URL_PATTERN, {
+    message:
+      'DATABASE_URL deve ser uma URL de conexão do PostgreSQL, como postgresql://usuario:senha@localhost:5433/banco',
+  })
+  DATABASE_URL!: string;
 }
 
 export function validateEnvironment(

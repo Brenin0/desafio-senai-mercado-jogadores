@@ -33,3 +33,5 @@ artificial" do README.
 | 21/10/2026 | 3 · Passo 10 | Claude Code | `standings.ts` (RN21) com os 6 clubes do exemplo e um empate; ids escolhidos para que desempatar pelo id em vez do nome falhe | Nenhuma |
 | 21/10/2026 | 3 · Passo 11 | Claude Code | `pagination.ts` (RN07) e `datetime.ts` (RN01: entrada estrita, data inexistente recusada, saída em `-03:00` sem depender do fuso) | Nenhuma |
 | 21/10/2026 | 3 · Passo 12 | Claude Code | README: `decimal.js`, pasta `src/domain` e decisões de cálculo | Nenhuma |
+| 22/10/2026 | 4 · Plano | Claude Code | Plano da Fase 4 em 11 passos. Achado: o `ValidationPipe` global converte o id da URL com `+value` antes do pipe de id (`"01"` viraria 1), então a conversão de primitivos será desligada; e2e num banco separado (`passe_e2e`); jogador com clube inserido direto pelo Prisma nos testes até existir a compra | Aprovei como proposto |
+| 22/10/2026 | 4 · Passo 1 | Claude Code | `PrismaService` (conexão aberta no primeiro uso), `TransactionRunner` (o service abre a transação e os repositories recebem o cliente dela), `Clock` injetável para o "agora" e `DATABASE_URL` validada na subida, com testes | Nenhuma |
