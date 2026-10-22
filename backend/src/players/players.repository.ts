@@ -54,4 +54,9 @@ export class PlayersRepository {
     });
     return toPlayer(row);
   }
+
+  /** RN09: exclusão lógica; nada é apagado do banco. */
+  async markDeleted(id: number, deletedAt: Date): Promise<void> {
+    await this.prisma.player.update({ where: { id }, data: { deletedAt } });
+  }
 }

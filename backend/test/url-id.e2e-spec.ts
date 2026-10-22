@@ -20,7 +20,7 @@ describe('Id da URL (V8)', () => {
   let app: NestExpressApplication;
 
   beforeAll(async () => {
-    app = await createTestApp([SampleController]);
+    app = await createTestApp({ controllers: [SampleController] });
   });
 
   afterAll(async () => {

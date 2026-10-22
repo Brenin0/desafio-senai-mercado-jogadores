@@ -8,3 +8,6 @@ export function ageDecreaseMessage(currentAge: number): string {
 
 export const SICK_TO_FIT =
   'Jogador DOENTE não volta direto para APTO: passe antes por MAL_CONDICIONADO.';
+
+export const PLAYER_IN_CLUB_NOT_DELETABLE =
+  'Só jogador livre pode ser excluído: este está no elenco de um clube.';

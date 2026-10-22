@@ -1,8 +1,20 @@
-import { Body, Controller, Get, Patch, Post, Put, Res } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Patch,
+  Post,
+  Put,
+  Res,
+} from '@nestjs/common';
 import {
   ApiBadRequestResponse,
   ApiConflictResponse,
   ApiCreatedResponse,
+  ApiNoContentResponse,
   ApiNotFoundResponse,
   ApiOkResponse,
   ApiTags,
@@ -83,5 +95,20 @@ export class PlayersController {
     @Body() body: ChangeConditionDto,
   ): Promise<PlayerResponseDto> {
     return this.players.changeCondition(id, body);
+  }
+
+  @Delete(':id')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiNoContentResponse({ description: 'Jogador excluído; resposta sem corpo' })
+  @ApiNotFoundResponse({
+    type: ErrorResponseDto,
+    description: 'Jogador inexistente ou já excluído',
+  })
+  @ApiConflictResponse({
+    type: ErrorResponseDto,
+    description: 'Jogador que está num clube',
+  })
+  delete(@PlayerIdParam() id: number): Promise<void> {
+    return this.players.delete(id);
   }
 }

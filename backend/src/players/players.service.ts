@@ -3,6 +3,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { Clock } from '../common/clock/clock';
 import { calculateBaseValue } from '../domain/base-value';
 import { calculateOverall } from '../domain/overall';
 import { Player } from '../domain/player';
@@ -14,6 +15,7 @@ import { PlayerResponseDto } from './dto/player-response.dto';
 import { UpdatePlayerDto } from './dto/update-player.dto';
 import {
   ageDecreaseMessage,
+  PLAYER_IN_CLUB_NOT_DELETABLE,
   PLAYER_NOT_FOUND,
   POSITION_LOCKED_BY_CLUB,
   SICK_TO_FIT,
@@ -27,6 +29,7 @@ export class PlayersService {
     private readonly players: PlayersRepository,
     private readonly lineups: LineupRepository,
     private readonly transaction: TransactionRunner,
+    private readonly clock: Clock,
   ) {}
 
   /**
@@ -105,6 +108,18 @@ export class PlayersService {
       return this.players.updateCondition(id, condition, db);
     });
     return toPlayerResponse(updated);
+  }
+
+  /**
+   * RN09: só jogador livre pode ser excluído. A exclusão é lógica: o jogador passa a contar como
+   * inexistente, e as transações e partidas antigas continuam como foram gravadas.
+   */
+  async delete(id: number): Promise<void> {
+    const player = await this.findActive(id);
+    if (player.clubId !== null) {
+      throw new ConflictException(PLAYER_IN_CLUB_NOT_DELETABLE);
+    }
+    await this.players.markDeleted(id, this.clock.now());
   }
 
   private async findActive(id: number): Promise<Player> {

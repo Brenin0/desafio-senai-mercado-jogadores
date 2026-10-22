@@ -52,7 +52,7 @@ describe('Erros e validação da entrada (V1, V2, V7, V9)', () => {
   let app: NestExpressApplication;
 
   beforeAll(async () => {
-    app = await createTestApp([SampleController]);
+    app = await createTestApp({ controllers: [SampleController] });
   });
 
   afterAll(async () => {
