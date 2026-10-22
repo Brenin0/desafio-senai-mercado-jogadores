@@ -19,6 +19,7 @@ export function createValidationPipe(): ValidationPipe {
   return new StrictValidationPipe({
     whitelist: true,
     forbidNonWhitelisted: false,
+    stopAtFirstError: true,
     transform: true,
     transformOptions: { enableImplicitConversion: false },
     exceptionFactory: (errors) =>

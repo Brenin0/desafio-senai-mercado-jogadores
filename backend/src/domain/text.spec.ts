@@ -1,7 +1,10 @@
 import {
   compareByNameAndId,
   compareNames,
+  countCharacters,
+  countWords,
   hasControlCharacter,
+  hasDigit,
   matchesSearch,
   normalizeClubName,
   normalizeSpaces,
@@ -27,6 +30,55 @@ describe('V4 – caracteres de controle', () => {
 
   it('nome com acentos, hífen e ponto não tem caractere de controle', () => {
     expect(hasControlCharacter('Zé Ana-Maria Jr.')).toBe(false);
+  });
+});
+
+describe('V4 – caractere é um ponto de código Unicode', () => {
+  it('"é" pré-composto conta 1', () => {
+    expect(countCharacters('Zé')).toBe(2);
+  });
+
+  it('caractere fora do plano básico conta 1, não 2', () => {
+    expect(countCharacters('A 𝔸')).toBe(3);
+  });
+
+  it('o seletor de variação (U+FE0F) é um ponto de código e conta', () => {
+    expect(countCharacters('A❤️')).toBe(3);
+  });
+});
+
+describe('V4 – palavra é uma sequência sem espaços com pelo menos uma letra', () => {
+  it.each([
+    ['Meia Lua', 2],
+    ['Pelé', 1],
+    ['Zé "Foguete" Lima', 3],
+    ['F.C. Recife', 2],
+    ['Ana-Maria Souza', 2],
+    ['Águias Futebol Clube', 3],
+  ])('"%s" tem %i palavra(s)', (text, words) => {
+    expect(countWords(text)).toBe(words);
+  });
+
+  it('pedaço sem letra não conta como palavra: "Ana - Lima" tem 2', () => {
+    expect(countWords('Ana - Lima')).toBe(2);
+  });
+
+  it('texto vazio tem 0 palavras', () => {
+    expect(countWords('')).toBe(0);
+  });
+});
+
+describe('Limites – dígito vai de 0 a 9', () => {
+  it.each(['Meia Lua 2', '0 Lua', 'Lua9'])('"%s" tem dígito', (text) => {
+    expect(hasDigit(text)).toBe(true);
+  });
+
+  it('algarismo de outra escrita não é dígito de 0 a 9', () => {
+    expect(hasDigit('Meia Lua ٣')).toBe(false);
+  });
+
+  it('nome sem números não tem dígito', () => {
+    expect(hasDigit('Zé "Foguete" Lima')).toBe(false);
   });
 });
 
