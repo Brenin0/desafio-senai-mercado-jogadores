@@ -86,7 +86,7 @@ Cada pasta tem um `.env.example`, que o passo a passo acima copia para `.env`.
 | --- | --- | --- | --- |
 | `PORT` | `backend` | `3000` | Porta HTTP da API. |
 | `FRONTEND_ORIGIN` | `backend` | `http://localhost:5173` | Única origem liberada no CORS, sem caminho e sem barra no final. Obrigatória: sem ela, a API não sobe e diz o motivo. |
-| `DATABASE_URL` | `backend` | `postgresql://passe:passe@localhost:5433/passe?schema=public` | Conexão do Prisma com o PostgreSQL do `docker-compose.yml`, na porta 5433 do computador. |
+| `DATABASE_URL` | `backend` | `postgresql://passe:passe@localhost:5433/passe?schema=public` | Conexão do Prisma com o PostgreSQL do `docker-compose.yml`, na porta 5433 do computador. Obrigatória: sem ela, a API não sobe e diz o motivo. Os testes e2e usam o mesmo servidor, num banco separado (veja [Testes](#testes-lint-documentação-da-api-e-logs)). |
 | `VITE_API_URL` | `frontend` | `http://localhost:3000` | Origem da API, sem `/api/v1` (o frontend acrescenta). Se faltar, o frontend usa `http://localhost:3000`. |
 
 ## Testes, lint, documentação da API e logs
@@ -94,11 +94,16 @@ Cada pasta tem um `.env.example`, que o passo a passo acima copia para `.env`.
 Na pasta `backend`:
 
 ```bash
-npm test               # testes unitários (Jest), com as tabelas de exemplo do enunciado; terminam sozinhos
-npm run test:e2e       # testes das respostas HTTP (Jest e Supertest); terminam sozinhos
+npm test               # testes unitários (Jest), com as tabelas de exemplo do enunciado; não usam o banco
+npm run test:e2e       # testes das respostas HTTP (Jest e Supertest); precisam do banco no ar
 npm run lint           # ESLint; só verifica
 npm run format:check   # Prettier; só verifica, sem alterar arquivos
 ```
+
+Os dois comandos de teste terminam sozinhos. O `npm run test:e2e` precisa do banco no ar
+(`docker compose up -d --wait db`, na raiz) e do `.env` da pasta `backend`. Ele usa um banco separado,
+`passe_e2e`, no mesmo PostgreSQL: cria esse banco e aplica as migrations sozinho, apaga os dados dele
+antes de cada teste e nunca mexe no banco da aplicação.
 
 Na pasta `frontend`:
 
@@ -120,16 +125,20 @@ npm run format:check   # Prettier; só verifica, sem alterar arquivos
 /
 ├── backend/                 API REST (NestJS)
 │   ├── src/
-│   │   ├── common/          filtro global de erros, pipes de validação e middlewares (log e JSON inválido)
+│   │   ├── clubs/           clubes: controller, service, repository, DTOs e validadores
+│   │   ├── common/          filtro global de erros, relógio, pipes, validadores reutilizáveis e middlewares
 │   │   ├── config/          validação das variáveis de ambiente e Swagger
 │   │   ├── domain/          regras de cálculo puras (sem NestJS e sem Prisma), uma por arquivo, com os testes
+│   │   ├── league/          liga (por enquanto, a saída do titular da escalação)
+│   │   ├── players/         jogadores: controller, service, repository, DTOs e validadores
+│   │   ├── prisma/          conexão com o banco e transação usada pelos services
 │   │   ├── app.module.ts
 │   │   ├── app.setup.ts     configuração única da aplicação: prefixo, CORS, validação, erros e Swagger
 │   │   └── main.ts
 │   ├── prisma/
 │   │   ├── schema.prisma    as 7 tabelas do banco
 │   │   └── migrations/      migrations versionadas, aplicadas por db:migrate e db:reset
-│   └── test/                testes das respostas HTTP (e2e)
+│   └── test/                testes das respostas HTTP (e2e), num banco separado
 ├── frontend/                interface web (React e Vite)
 │   └── src/
 │       ├── api/             cliente HTTP: único lugar que chama a API
@@ -195,7 +204,8 @@ Detalhes que o enunciado deixou à escolha do candidato:
 - **Erro inesperado:** `500` com uma mensagem genérica; o detalhe vai só para o log da API.
 - **Log:** uma linha por requisição, gravada quando a resposta termina, inclusive nas recusas.
 - **`npm test`** roda só os testes que não dependem do banco; os testes das respostas HTTP ficam em
-  `npm run test:e2e`.
+  `npm run test:e2e`, que usa um banco separado (`passe_e2e`) e roda uma suíte por vez, porque cada teste
+  começa com as tabelas vazias.
 - **Portas:**
   - API na `3000`;
   - frontend na `5173` fixa: se a porta estiver ocupada, o Vite para em vez de trocar de porta;
@@ -223,6 +233,28 @@ Detalhes que o enunciado deixou à escolha do candidato:
     dividida por 24 horas e arredondada para cima;
   - datas nas respostas com os segundos e sem os milissegundos, que são descartados (não arredondados); a
     conversão para `-03:00` não depende do fuso da máquina.
+- **Validação e respostas da API:**
+  - ordem das recusas: primeiro o formato (`400`, no corpo e na query), depois a existência (`404`: id da
+    URL e `club_id` da query), depois as regras de negócio (`409`); no `PUT` de jogador, a posição é
+    conferida antes da idade; na criação de clube, o limite de 20 vem antes do nome e da sigla;
+  - uma mensagem por campo recusado, a da primeira regra violada; campos diferentes vêm separados por `; `;
+  - palavra: um pedaço sem letra entre espaços é aceito, mas não conta como palavra (`"Ana - Lima"` tem 2
+    palavras);
+  - além da V4, nenhuma normalização de texto: o nome é gravado e devolvido como chegou, com o tamanho
+    contado em pontos de código; texto que fica vazio depois da V4 é recusado com `400`;
+  - sigla do clube: não passa pela V4 (`" AGU"` é recusada); a "primeira letra do nome" é o primeiro
+    caractere da categoria Unicode L, comparado sem maiúsculas e sem acentos (em "F.C. Recife", o F);
+  - query params: parâmetro da tabela repetido (como `?page=1&page=2`) é recusado com `400`; id fora do
+    formato na query também é `400` (na URL, é `404`);
+  - `Location` como caminho a partir da raiz do servidor, como `/api/v1/players/2`;
+  - enviar a condição atual no `PATCH /players/{id}/condition` responde `200` sem gravar nada;
+  - listagem de jogadores: posição, condição, clube, livre e idade são filtrados no banco; a busca sem
+    acentos, a faixa de valor de mercado (que não é coluna), a ordenação e a paginação são feitas pelo
+    domínio;
+  - elenco do clube: os jogadores com contrato `ATIVO` com ele;
+  - Swagger: os campos cujo tipo é outra classe declaram o tipo no `@ApiProperty`; numa pasta com acento
+    (como `C:\Users\Usuário`), o plugin do Swagger aponta esses tipos para um caminho de `src` que não
+    existe depois do build, e o `/api/docs` deixaria de abrir.
 - **Frontend:**
   - o endereço inicial (`/`) abre a lista de jogadores;
   - uma consulta que falha por rede ou por erro do servidor é repetida uma vez;

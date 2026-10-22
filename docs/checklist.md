@@ -930,6 +930,10 @@ aprovada.** Depois do seu ok, as aprovadas vão para "Decisões e premissas" do 
 **Adotadas na Fase 1** e já registradas no README: D02, D03, D04, D17, D18, D19, D21 (com o banco na porta
 5433 do computador), DF13 e DF14.
 
+**Adotadas na Fase 4** e registradas no README: D01 (só a parte de jogadores e clubes; as ordens da compra
+e da escalação ficam para as Fases 5 e 6), D06, D07, D08, D09, D14 e D15. O D19 ganhou o banco separado
+dos testes e2e (`passe_e2e`).
+
 ### Backend
 
 | # | Ponto em aberto | O que o enunciado diz | Proposta |
