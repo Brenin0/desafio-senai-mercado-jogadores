@@ -1,6 +1,7 @@
-import { Body, Controller, Get, Post, Res } from '@nestjs/common';
+import { Body, Controller, Get, Patch, Post, Put, Res } from '@nestjs/common';
 import {
   ApiBadRequestResponse,
+  ApiConflictResponse,
   ApiCreatedResponse,
   ApiNotFoundResponse,
   ApiOkResponse,
@@ -9,8 +10,10 @@ import {
 import type { Response } from 'express';
 import { ErrorResponseDto } from '../common/http/error-response.dto';
 import { resourcePath } from '../common/http/resource-path';
+import { ChangeConditionDto } from './dto/change-condition.dto';
 import { CreatePlayerDto } from './dto/create-player.dto';
 import { PlayerResponseDto } from './dto/player-response.dto';
+import { UpdatePlayerDto } from './dto/update-player.dto';
 import { PlayerIdParam } from './player-id.param';
 import { PlayersService } from './players.service';
 
@@ -43,5 +46,42 @@ export class PlayersController {
   })
   findById(@PlayerIdParam() id: number): Promise<PlayerResponseDto> {
     return this.players.findById(id);
+  }
+
+  @Put(':id')
+  @ApiOkResponse({ type: PlayerResponseDto })
+  @ApiBadRequestResponse({ type: ErrorResponseDto })
+  @ApiNotFoundResponse({
+    type: ErrorResponseDto,
+    description: 'Jogador inexistente ou excluído',
+  })
+  @ApiConflictResponse({
+    type: ErrorResponseDto,
+    description:
+      'Mudança de posição de jogador com clube; idade menor que a atual',
+  })
+  update(
+    @PlayerIdParam() id: number,
+    @Body() body: UpdatePlayerDto,
+  ): Promise<PlayerResponseDto> {
+    return this.players.update(id, body);
+  }
+
+  @Patch(':id/condition')
+  @ApiOkResponse({ type: PlayerResponseDto })
+  @ApiBadRequestResponse({ type: ErrorResponseDto })
+  @ApiNotFoundResponse({
+    type: ErrorResponseDto,
+    description: 'Jogador inexistente ou excluído',
+  })
+  @ApiConflictResponse({
+    type: ErrorResponseDto,
+    description: 'De DOENTE direto para APTO',
+  })
+  changeCondition(
+    @PlayerIdParam() id: number,
+    @Body() body: ChangeConditionDto,
+  ): Promise<PlayerResponseDto> {
+    return this.players.changeCondition(id, body);
   }
 }

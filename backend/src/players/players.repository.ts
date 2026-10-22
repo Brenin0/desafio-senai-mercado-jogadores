@@ -1,9 +1,16 @@
 import { Injectable } from '@nestjs/common';
-import { Player } from '../domain/player';
+import { Condition, Player } from '../domain/player';
 import { PrismaService } from '../prisma/prisma.service';
+import { DatabaseClient } from '../prisma/transaction-runner';
 import { PLAYER_COLUMNS, toPlayer } from './player-row';
 
 export type NewPlayer = Omit<Player, 'id'>;
+
+/** RN08: os únicos campos que mudam depois do cadastro. */
+export type PlayerChanges = Pick<
+  Player,
+  'name' | 'position' | 'agility' | 'age'
+>;
 
 @Injectable()
 export class PlayersRepository {
@@ -24,5 +31,27 @@ export class PlayersRepository {
       select: PLAYER_COLUMNS,
     });
     return row && toPlayer(row);
+  }
+
+  async update(id: number, changes: PlayerChanges): Promise<Player> {
+    const row = await this.prisma.player.update({
+      where: { id },
+      data: changes,
+      select: PLAYER_COLUMNS,
+    });
+    return toPlayer(row);
+  }
+
+  async updateCondition(
+    id: number,
+    condition: Condition,
+    db: DatabaseClient,
+  ): Promise<Player> {
+    const row = await db.player.update({
+      where: { id },
+      data: { condition },
+      select: PLAYER_COLUMNS,
+    });
+    return toPlayer(row);
   }
 }

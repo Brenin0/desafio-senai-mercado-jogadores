@@ -12,6 +12,7 @@ import {
 } from '../../common/validators/value.validators';
 import {
   ATTRIBUTE_NAMES,
+  CONDITIONS,
   PlayerAttributes,
   POSITIONS,
 } from '../../domain/player';
@@ -55,6 +56,10 @@ export function IsPlayerName(): PropertyDecorator {
 
 export function IsPosition(): PropertyDecorator {
   return applyDecorators(IsRequired(), IsOneOf(POSITIONS));
+}
+
+export function IsCondition(): PropertyDecorator {
+  return applyDecorators(IsRequired(), IsOneOf(CONDITIONS));
 }
 
 export function IsAge(): PropertyDecorator {
