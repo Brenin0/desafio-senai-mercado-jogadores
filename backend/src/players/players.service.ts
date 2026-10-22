@@ -3,14 +3,19 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { CLUB_NOT_FOUND } from '../clubs/club.errors';
+import { ClubsRepository } from '../clubs/clubs.repository';
 import { Clock } from '../common/clock/clock';
 import { calculateBaseValue } from '../domain/base-value';
 import { calculateOverall } from '../domain/overall';
 import { Player } from '../domain/player';
+import { listPlayers, PlayerSortCriterion } from '../domain/player-listing';
 import { LineupRepository } from '../league/lineup.repository';
 import { TransactionRunner } from '../prisma/transaction-runner';
 import { ChangeConditionDto } from './dto/change-condition.dto';
 import { CreatePlayerDto } from './dto/create-player.dto';
+import { ListPlayersQueryDto } from './dto/list-players-query.dto';
+import { PlayerPageResponseDto } from './dto/player-page-response.dto';
 import { PlayerResponseDto } from './dto/player-response.dto';
 import { UpdatePlayerDto } from './dto/update-player.dto';
 import {
@@ -20,13 +25,14 @@ import {
   POSITION_LOCKED_BY_CLUB,
   SICK_TO_FIT,
 } from './player.errors';
-import { toPlayerResponse } from './player.presenter';
+import { toPlayerPageResponse, toPlayerResponse } from './player.presenter';
 import { PlayersRepository } from './players.repository';
 
 @Injectable()
 export class PlayersService {
   constructor(
     private readonly players: PlayersRepository,
+    private readonly clubs: ClubsRepository,
     private readonly lineups: LineupRepository,
     private readonly transaction: TransactionRunner,
     private readonly clock: Clock,
@@ -59,6 +65,37 @@ export class PlayersService {
       clubId: null,
     });
     return toPlayerResponse(player);
+  }
+
+  /**
+   * RN07: os filtros que são colunas vão para o banco; a busca sem acentos, a faixa de valor de
+   * mercado, a ordenação e a paginação são feitas pelo domínio. Clube do filtro inexistente → 404.
+   */
+  async list(query: ListPlayersQueryDto): Promise<PlayerPageResponseDto> {
+    if (
+      query.club_id !== undefined &&
+      !(await this.clubs.exists(query.club_id))
+    ) {
+      throw new NotFoundException(CLUB_NOT_FOUND);
+    }
+    const players = await this.players.findActive({
+      position: query.position,
+      condition: query.condition,
+      free: query.free,
+      clubId: query.club_id,
+      minAge: query.min_age,
+      maxAge: query.max_age,
+    });
+    const page = listPlayers(players, {
+      search: query.search,
+      minValue: query.min_value,
+      maxValue: query.max_value,
+      // O formato do sort já foi validado no DTO (IsQuerySort).
+      sort: query.sort.split(',') as PlayerSortCriterion[],
+      page: query.page,
+      limit: query.limit,
+    });
+    return toPlayerPageResponse(page);
   }
 
   async findById(id: number): Promise<PlayerResponseDto> {

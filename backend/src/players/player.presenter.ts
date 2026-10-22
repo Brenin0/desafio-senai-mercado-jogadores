@@ -1,6 +1,8 @@
 import { calculateMarketValue } from '../domain/market-value';
 import { calculateOverall } from '../domain/overall';
+import { Page } from '../domain/pagination';
 import { Player } from '../domain/player';
+import { PlayerPageResponseDto } from './dto/player-page-response.dto';
 import { PlayerResponseDto } from './dto/player-response.dto';
 
 /**
@@ -26,5 +28,21 @@ export function toPlayerResponse(player: Player): PlayerResponseDto {
     potential: player.potential,
     overall: calculateOverall(player.position, player),
     club_id: player.clubId,
+  };
+}
+
+/** Página de jogadores de GET /players, com `data` e `meta` (RN07). */
+export function toPlayerPageResponse({
+  data,
+  meta,
+}: Page<Player>): PlayerPageResponseDto {
+  return {
+    data: data.map(toPlayerResponse),
+    meta: {
+      page: meta.page,
+      limit: meta.limit,
+      total_items: meta.totalItems,
+      total_pages: meta.totalPages,
+    },
   };
 }

@@ -4,6 +4,7 @@ import Decimal from 'decimal.js';
 import { createValidationPipe } from '../pipes/validation.pipe';
 import {
   IsNotGreaterThan,
+  IsNotTrueWith,
   IsQueryBoolean,
   IsQueryDecimal,
   IsQueryInteger,
@@ -88,7 +89,12 @@ class FiltersDto {
 
   @IsOptional()
   @IsQueryBoolean()
+  @IsNotTrueWith('club_id')
   free?: boolean;
+
+  @IsOptional()
+  @IsQueryInteger()
+  club_id?: number;
 
   @IsOptional()
   @IsQueryDecimal(0, 550)
@@ -337,6 +343,22 @@ describe('Validadores de query (Filtros e query params)', () => {
   ])('recusa a faixa contraditória %p', async (query, message) => {
     await expect(validate(FiltersDto, query, 'query')).resolves.toEqual({
       refused: message,
+    });
+  });
+
+  it('recusa a combinação contraditória free=true com club_id', async () => {
+    await expect(
+      validate(FiltersDto, { free: 'true', club_id: '1' }, 'query'),
+    ).resolves.toEqual({
+      refused: 'free=true não pode vir junto com club_id',
+    });
+  });
+
+  it('aceita free=false com club_id', async () => {
+    await expect(
+      validate(FiltersDto, { free: 'false', club_id: '1' }, 'query'),
+    ).resolves.toEqual({
+      accepted: { free: false, club_id: 1, page: 1, sort: 'name' },
     });
   });
 

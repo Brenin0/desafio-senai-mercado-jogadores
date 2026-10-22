@@ -102,3 +102,18 @@ export function IsNotGreaterThan(otherProperty: string): PropertyDecorator {
     },
   });
 }
+
+/** Combinação contraditória: o parâmetro com valor `true` não pode vir junto com o outro. */
+export function IsNotTrueWith(otherProperty: string): PropertyDecorator {
+  return ValidateBy({
+    name: 'isNotTrueWith',
+    constraints: [otherProperty],
+    validator: {
+      validate: (value: unknown, args: ValidationArguments) =>
+        value !== true ||
+        (args.object as Record<string, unknown>)[otherProperty] === undefined,
+      defaultMessage: () =>
+        '$property=true não pode vir junto com $constraint1',
+    },
+  });
+}

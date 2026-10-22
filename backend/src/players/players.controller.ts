@@ -8,6 +8,7 @@ import {
   Patch,
   Post,
   Put,
+  Query,
   Res,
 } from '@nestjs/common';
 import {
@@ -24,6 +25,8 @@ import { ErrorResponseDto } from '../common/http/error-response.dto';
 import { resourcePath } from '../common/http/resource-path';
 import { ChangeConditionDto } from './dto/change-condition.dto';
 import { CreatePlayerDto } from './dto/create-player.dto';
+import { ListPlayersQueryDto } from './dto/list-players-query.dto';
+import { PlayerPageResponseDto } from './dto/player-page-response.dto';
 import { PlayerResponseDto } from './dto/player-response.dto';
 import { UpdatePlayerDto } from './dto/update-player.dto';
 import { PlayerIdParam } from './player-id.param';
@@ -33,6 +36,20 @@ import { PlayersService } from './players.service';
 @Controller('players')
 export class PlayersController {
   constructor(private readonly players: PlayersService) {}
+
+  @Get()
+  @ApiOkResponse({ type: PlayerPageResponseDto })
+  @ApiBadRequestResponse({
+    type: ErrorResponseDto,
+    description: 'Parâmetro fora da forma aceita, vazio ou contraditório',
+  })
+  @ApiNotFoundResponse({
+    type: ErrorResponseDto,
+    description: 'Clube do filtro club_id inexistente',
+  })
+  list(@Query() query: ListPlayersQueryDto): Promise<PlayerPageResponseDto> {
+    return this.players.list(query);
+  }
 
   @Post()
   @ApiCreatedResponse({
