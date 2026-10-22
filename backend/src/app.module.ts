@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { ClockModule } from './common/clock/clock.module';
 import { validateEnvironment } from './config/environment';
+import { PlayersModule } from './players/players.module';
 import { PrismaModule } from './prisma/prisma.module';
 
 @Module({
@@ -13,6 +14,7 @@ import { PrismaModule } from './prisma/prisma.module';
     }),
     ClockModule,
     PrismaModule,
+    PlayersModule,
   ],
 })
 export class AppModule {}

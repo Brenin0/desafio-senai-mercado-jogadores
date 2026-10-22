@@ -27,8 +27,9 @@ export function createValidationPipe(): ValidationPipe {
   });
 }
 
+/** Junta as mensagens de todos os campos; uma regra que vale para vários campos aparece uma vez. */
 export function formatValidationErrors(errors: ValidationError[]): string {
-  return collectMessages(errors).join('; ');
+  return [...new Set(collectMessages(errors))].join('; ');
 }
 
 function collectMessages(errors: ValidationError[]): string[] {

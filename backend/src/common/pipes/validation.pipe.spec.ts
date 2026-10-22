@@ -46,4 +46,15 @@ describe('formatValidationErrors', () => {
       'Nome inválido.; Data inválida.',
     );
   });
+
+  it('mostra uma vez a mesma mensagem vinda de campos diferentes', () => {
+    const sum = 'A soma dos seis atributos não pode passar de 480.';
+    const errors: ValidationError[] = [
+      { property: 'pace', constraints: { sum } },
+      { property: 'physical', constraints: { sum } },
+      { property: 'age', constraints: { range: 'Idade inválida.' } },
+    ];
+
+    expect(formatValidationErrors(errors)).toBe(`${sum}; Idade inválida.`);
+  });
 });
