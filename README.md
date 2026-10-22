@@ -94,7 +94,7 @@ Cada pasta tem um `.env.example`, que o passo a passo acima copia para `.env`.
 Na pasta `backend`:
 
 ```bash
-npm test               # testes unitários (Jest); terminam sozinhos
+npm test               # testes unitários (Jest), com as tabelas de exemplo do enunciado; terminam sozinhos
 npm run test:e2e       # testes das respostas HTTP (Jest e Supertest); terminam sozinhos
 npm run lint           # ESLint; só verifica
 npm run format:check   # Prettier; só verifica, sem alterar arquivos
@@ -122,6 +122,7 @@ npm run format:check   # Prettier; só verifica, sem alterar arquivos
 │   ├── src/
 │   │   ├── common/          filtro global de erros, pipes de validação e middlewares (log e JSON inválido)
 │   │   ├── config/          validação das variáveis de ambiente e Swagger
+│   │   ├── domain/          regras de cálculo puras (sem NestJS e sem Prisma), uma por arquivo, com os testes
 │   │   ├── app.module.ts
 │   │   ├── app.setup.ts     configuração única da aplicação: prefixo, CORS, validação, erros e Swagger
 │   │   └── main.ts
@@ -156,6 +157,7 @@ PostgreSQL 16.
 | `@nestjs/swagger` | Documentação interativa da API em `/api/docs`. |
 | `prisma` | ORM: descreve as tabelas em `prisma/schema.prisma`, gera as migrations e as aplica (`db:migrate` e `db:reset`). |
 | `@prisma/client` | Acesso da API ao banco, gerado a partir do schema durante o `npm ci`. |
+| `decimal.js` | Contas com valores em moedas sem os erros do ponto flutuante, com arredondamento meio para longe do zero. |
 | `@nestjs/cli`, `@nestjs/schematics` | Build e execução do NestJS (`nest build` e `nest start`). |
 | `typescript` | Linguagem do projeto. |
 | `jest`, `ts-jest`, `@nestjs/testing` | Testes automatizados. |
@@ -210,6 +212,17 @@ Detalhes que o enunciado deixou à escolha do candidato:
   - valores de lista (posição, condição, situação do contrato, tipo da transação, formação e atributo do
     duelo) gravados como texto, nos tamanhos do enunciado, sem tipo enum do PostgreSQL;
   - o `db:reset` usa `--skip-seed`, para o banco recriado nascer sempre vazio.
+- **Regras de cálculo** (`backend/src/domain`):
+  - valores em moedas calculados com `decimal.js` e arredondados uma única vez, no resultado final, para 2
+    casas, com o meio para longe do zero; o limite de 50% do caixa (RN13) não é arredondado;
+  - overall (RN06) e atributo × 0,85 da partida (RN20) arredondados para o inteiro, com o meio para cima;
+  - ordem alfabética feita na aplicação, e não pelo banco: minúsculas, decomposição NFD sem as marcas de
+    acento (categoria Unicode Mn) e comparação por ponto de código; o empate é desfeito pelo id;
+  - na V4, só o U+0020 conta como espaço, e caractere de controle é qualquer um da categoria Unicode Cc;
+  - dias restantes (RN15): diferença em milissegundos entre o fim da fidelidade e o momento da operação,
+    dividida por 24 horas e arredondada para cima;
+  - datas nas respostas com os segundos e sem os milissegundos, que são descartados (não arredondados); a
+    conversão para `-03:00` não depende do fuso da máquina.
 - **Frontend:**
   - o endereço inicial (`/`) abre a lista de jogadores;
   - uma consulta que falha por rede ou por erro do servidor é repetida uma vez;
