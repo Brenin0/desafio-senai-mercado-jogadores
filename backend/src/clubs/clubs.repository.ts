@@ -1,10 +1,19 @@
 import { Injectable } from '@nestjs/common';
+import Decimal from 'decimal.js';
 import { Club } from '../domain/club';
+import { ACTIVE_CONTRACT_STATUS, SquadMember } from '../domain/contract';
+import { Player } from '../domain/player';
+import { PLAYER_COLUMNS, toPlayer } from '../players/player-row';
 import { PrismaService } from '../prisma/prisma.service';
 import { CLUB_COLUMNS, toClub } from './club-row';
 
 /** Clube a gravar, com o nome normalizado da RN10, que tem índice único no banco. */
 export type NewClub = Omit<Club, 'id'> & { normalizedName: string };
+
+export interface ClubWithPlayers {
+  club: Club;
+  players: Player[];
+}
 
 @Injectable()
 export class ClubsRepository {
@@ -32,5 +41,50 @@ export class ClubsRepository {
       select: CLUB_COLUMNS,
     });
     return toClub(row);
+  }
+
+  async findById(id: number): Promise<Club | null> {
+    const row = await this.prisma.club.findUnique({
+      where: { id },
+      select: CLUB_COLUMNS,
+    });
+    return row && toClub(row);
+  }
+
+  /** Todos os clubes, cada um com os jogadores do elenco, sem ordem (RN11). */
+  async findAllWithPlayers(): Promise<ClubWithPlayers[]> {
+    const rows = await this.prisma.club.findMany({
+      select: {
+        ...CLUB_COLUMNS,
+        players: { where: { deletedAt: null }, select: PLAYER_COLUMNS },
+      },
+    });
+    return rows.map(({ players, ...club }) => ({
+      club: toClub(club),
+      players: players.map(toPlayer),
+    }));
+  }
+
+  /** Elenco do clube: os jogadores com contrato ATIVO com ele, sem ordem (RN11). */
+  async findSquad(clubId: number): Promise<SquadMember[]> {
+    const rows = await this.prisma.contract.findMany({
+      where: {
+        clubId,
+        status: ACTIVE_CONTRACT_STATUS,
+        player: { deletedAt: null },
+      },
+      select: {
+        purchaseValue: true,
+        loyaltyUntil: true,
+        player: { select: PLAYER_COLUMNS },
+      },
+    });
+    return rows.map(({ player, purchaseValue, loyaltyUntil }) => ({
+      player: toPlayer(player),
+      contract: {
+        purchaseValue: new Decimal(purchaseValue.toString()),
+        loyaltyUntil,
+      },
+    }));
   }
 }

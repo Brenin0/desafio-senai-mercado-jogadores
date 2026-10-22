@@ -1,19 +1,33 @@
-import { ConflictException, Injectable } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
+import { Clock } from '../common/clock/clock';
 import { INITIAL_CLUB_CASH, MAX_CLUBS } from '../domain/club';
+import { sortClubs } from '../domain/club-listing';
+import { calculateClubWorth } from '../domain/club-worth';
+import { compareRosterOrder } from '../domain/roster';
 import { normalizeClubName } from '../domain/text';
 import {
   acronymTakenMessage,
+  CLUB_NOT_FOUND,
   clubNameTakenMessage,
   LEAGUE_FULL,
 } from './club.errors';
-import { toClubResponse } from './club.presenter';
+import { toClubDetailResponse, toClubResponse } from './club.presenter';
 import { ClubsRepository } from './clubs.repository';
+import { ClubDetailResponseDto } from './dto/club-detail-response.dto';
 import { ClubResponseDto } from './dto/club-response.dto';
 import { CreateClubDto } from './dto/create-club.dto';
+import { ListClubsQueryDto } from './dto/list-clubs-query.dto';
 
 @Injectable()
 export class ClubsService {
-  constructor(private readonly clubs: ClubsRepository) {}
+  constructor(
+    private readonly clubs: ClubsRepository,
+    private readonly clock: Clock,
+  ) {}
 
   /**
    * RN10: no máximo 20 clubes; nome único depois da V4, sem diferenciar maiúsculas e minúsculas,
@@ -36,6 +50,37 @@ export class ClubsService {
       acronym: dto.acronym,
       cash: INITIAL_CLUB_CASH,
     });
-    return toClubResponse(club, []);
+    return toClubResponse({ club, worth: calculateClubWorth(club.cash, []) });
+  }
+
+  /** RN11: clubes com o patrimônio do momento, pelo nome ou pelo patrimônio. */
+  async list({ sort }: ListClubsQueryDto): Promise<ClubResponseDto[]> {
+    const clubs = await this.clubs.findAllWithPlayers();
+    const valued = clubs.map(({ club, players }) => ({
+      club,
+      worth: calculateClubWorth(club.cash, players),
+    }));
+    return sortClubs(valued, sort).map(toClubResponse);
+  }
+
+  /** RN11: o clube com o elenco por posição, nome e id, e o contrato de cada jogador. */
+  async findById(id: number): Promise<ClubDetailResponseDto> {
+    const club = await this.clubs.findById(id);
+    if (!club) {
+      throw new NotFoundException(CLUB_NOT_FOUND);
+    }
+    const squad = await this.clubs.findSquad(id);
+    const worth = calculateClubWorth(
+      club.cash,
+      squad.map(({ player }) => player),
+    );
+    const orderedSquad = [...squad].sort((a, b) =>
+      compareRosterOrder(a.player, b.player),
+    );
+    return toClubDetailResponse(
+      { club, worth },
+      orderedSquad,
+      this.clock.now(),
+    );
   }
 }
