@@ -35,7 +35,7 @@ export interface PlayerUpdate {
   age: number;
 }
 
-export interface PlayerInput extends PlayerUpdate {
+interface PlayerInput extends PlayerUpdate {
   pace: number;
   shooting: number;
   passing: number;

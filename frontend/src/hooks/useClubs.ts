@@ -20,6 +20,7 @@ export function useCreateClub() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: createClub,
-    onSuccess: () => invalidate(queryClient, [queryKeys.clubs]),
+    onSuccess: () =>
+      invalidate(queryClient, [queryKeys.clubs, queryKeys.standings]),
   });
 }

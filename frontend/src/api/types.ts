@@ -22,7 +22,7 @@ export interface Player {
   club_id: number | null;
 }
 
-export interface PageMeta {
+interface PageMeta {
   page: number;
   limit: number;
   total_items: number;
@@ -110,4 +110,56 @@ export interface Lineup {
   formation: Formation | null;
   complete: boolean;
   players: Player[];
+}
+
+interface MatchSide {
+  club_id: number;
+  club_name: string;
+  formation: Formation;
+  goals: number;
+}
+
+export interface DuelPlayer {
+  player_id: number;
+  player_name: string;
+  position: Position;
+  condition: Condition;
+  attribute: string;
+  value: number;
+}
+
+export interface Duel {
+  order: number;
+  attacking_club_id: number;
+  attacker: DuelPlayer;
+  defender: DuelPlayer;
+  goal: boolean;
+}
+
+type MatchResult = 'MANDANTE' | 'VISITANTE' | 'EMPATE';
+
+export interface Match {
+  id: number;
+  played_at: string;
+  home: MatchSide;
+  away: MatchSide;
+  result: MatchResult;
+}
+
+export interface MatchDetail extends Match {
+  duels: Duel[];
+}
+
+export interface Standing {
+  position: number;
+  club_id: number;
+  club_name: string;
+  played: number;
+  wins: number;
+  draws: number;
+  losses: number;
+  goals_for: number;
+  goals_against: number;
+  goal_difference: number;
+  points: number;
 }

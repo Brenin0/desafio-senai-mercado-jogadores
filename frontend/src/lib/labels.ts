@@ -17,3 +17,12 @@ export const CONDITION_LABELS: Record<Condition, string> = {
 export const POSITIONS = Object.keys(POSITION_LABELS) as Position[];
 
 export const CONDITIONS = Object.keys(CONDITION_LABELS) as Condition[];
+
+export const ATTRIBUTE_LABELS: Record<string, string> = {
+  pace: 'Velocidade',
+  shooting: 'Finalização',
+  passing: 'Passe',
+  dribbling: 'Drible',
+  defending: 'Defesa',
+  physical: 'Físico',
+};

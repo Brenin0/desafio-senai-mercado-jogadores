@@ -1,6 +1,6 @@
 import type { Formation, Position } from '../../api/types.ts';
 
-export interface LineupSlot {
+interface LineupSlot {
   label: string;
   positions: Position[];
 }
