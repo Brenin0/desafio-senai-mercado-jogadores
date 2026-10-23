@@ -13,6 +13,8 @@ describe('RN13 – taxa de compra e limite de 50% do caixa', () => {
     ['261.15', '124.36', '6.22', '130.58', '130.575', false],
     ['261.15', '124.35', '6.22', '130.57', '130.575', true],
     ['300.00', '37.00', '1.85', '38.85', '150.00', true],
+    ['189.41', '90.20', '4.51', '94.71', '94.705', false],
+    ['189.41', '90.19', '4.51', '94.70', '94.705', true],
   ])(
     'caixa %s e valor de mercado %s → taxa %s, custo %s, limite %s, aceita: %s',
     (cash, marketValue, fee, totalCost, cashLimit, allowed) => {

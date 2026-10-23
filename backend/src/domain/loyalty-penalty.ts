@@ -1,9 +1,9 @@
 import Decimal from 'decimal.js';
+import { MILLISECONDS_PER_DAY } from './datetime';
 import { roundMoney } from './rounding';
 
 export type ClosedContractStatus = 'ENCERRADO' | 'RESCINDIDO';
 
-const MILLISECONDS_PER_DAY = 24 * 60 * 60 * 1000;
 const MAX_PENALTY = new Decimal('10.00');
 
 /**

@@ -1,3 +1,5 @@
+export const MILLISECONDS_PER_DAY = 24 * 60 * 60 * 1000;
+
 /** O horário de Brasília é sempre −03:00, sem horário de verão (RN01). */
 const BRASILIA_OFFSET_MS = 3 * 60 * 60 * 1000;
 

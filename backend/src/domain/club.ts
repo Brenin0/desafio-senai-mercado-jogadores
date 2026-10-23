@@ -4,6 +4,9 @@ import Decimal from 'decimal.js';
 export const INITIAL_CLUB_CASH = new Decimal('300.00');
 export const MAX_CLUBS = 20;
 
+/** RN14: no máximo 12 jogadores por clube. */
+export const MAX_SQUAD_SIZE = 12;
+
 /** Clube como está gravado: valor do elenco e patrimônio não são gravados (RN11). */
 export interface Club {
   id: number;
