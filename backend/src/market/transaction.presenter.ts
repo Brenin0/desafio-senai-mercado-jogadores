@@ -2,9 +2,10 @@ import Decimal from 'decimal.js';
 import { ActiveContract, ACTIVE_CONTRACT_STATUS } from '../domain/contract';
 import { formatBrasiliaDateTime } from '../domain/datetime';
 import { SaleEvaluation } from '../domain/sale';
-import { Transaction } from '../domain/transaction';
+import { summarizeTransactions, Transaction } from '../domain/transaction';
 import { PurchaseResponseDto } from './dto/purchase-response.dto';
 import { SaleResponseDto } from './dto/sale-response.dto';
+import { TransactionHistoryResponseDto } from './dto/transaction-history-response.dto';
 import { TransactionResponseDto } from './dto/transaction-response.dto';
 
 /** Transação das respostas, com os valores e o nome gravados no momento da operação (RN17). */
@@ -23,6 +24,23 @@ export function toTransactionResponse(
     profit: transaction.profit && transaction.profit.toNumber(),
     cash_change: transaction.cashChange.toNumber(),
     created_at: formatBrasiliaDateTime(transaction.createdAt),
+  };
+}
+
+/** Histórico do clube (2.3.3): as transações filtradas, na ordem recebida, e os totais delas. */
+export function toTransactionHistoryResponse(
+  transactions: Transaction[],
+): TransactionHistoryResponseDto {
+  const summary = summarizeTransactions(transactions);
+  return {
+    data: transactions.map(toTransactionResponse),
+    summary: {
+      total_spent: summary.totalSpent.toNumber(),
+      total_received: summary.totalReceived.toNumber(),
+      total_fees: summary.totalFees.toNumber(),
+      total_penalties: summary.totalPenalties.toNumber(),
+      total_profit: summary.totalProfit.toNumber(),
+    },
   };
 }
 

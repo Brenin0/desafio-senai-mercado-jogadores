@@ -64,6 +64,12 @@ export function apiClient(app: NestExpressApplication) {
     deletePlayer: (playerId: number) =>
       request(server()).delete(`/api/v1/players/${playerId}`),
 
+    editPlayer: (playerId: number, body: object) =>
+      request(server()).put(`/api/v1/players/${playerId}`).send(body),
+
+    history: (clubId: number | string, query = '') =>
+      request(server()).get(`/api/v1/clubs/${clubId}/transactions${query}`),
+
     findPlayer: (playerId: number) =>
       request(server()).get(`/api/v1/players/${playerId}`),
 
