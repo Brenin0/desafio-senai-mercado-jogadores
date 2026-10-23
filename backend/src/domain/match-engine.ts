@@ -116,7 +116,11 @@ function attacks(
   });
 }
 
-function outcome(homeGoals: number, awayGoals: number): MatchOutcome {
+/** RN20: quem marcou mais gols vence; gols iguais dão empate. Vale também para a partida gravada. */
+export function matchOutcome(
+  homeGoals: number,
+  awayGoals: number,
+): MatchOutcome {
   if (homeGoals > awayGoals) {
     return 'MANDANTE';
   }
@@ -138,7 +142,7 @@ export function playMatch(home: MatchTeam, away: MatchTeam): MatchResult {
   return {
     homeGoals,
     awayGoals,
-    result: outcome(homeGoals, awayGoals),
+    result: matchOutcome(homeGoals, awayGoals),
     duels: [...homeAttacks, ...awayAttacks],
   };
 }

@@ -4,6 +4,8 @@ import {
   DuelAttribute,
   DuelSide,
   MatchCondition,
+  matchOutcome,
+  MatchOutcome,
   MatchResult,
   MatchTeam,
   playMatch,
@@ -175,5 +177,17 @@ describe('RN20 – resultado', () => {
     const match = playMatch(aguias, { clubId: 2, players: aguias.players });
     expect(match.homeGoals).toBe(match.awayGoals);
     expect(match.result).toBe('EMPATE');
+  });
+});
+
+describe('RN20 e RN21 – result pelos gols de cada clube, também nas partidas já gravadas', () => {
+  it.each<[number, number, MatchOutcome]>([
+    [2, 1, 'MANDANTE'],
+    [1, 2, 'VISITANTE'],
+    [0, 3, 'VISITANTE'],
+    [0, 0, 'EMPATE'],
+    [3, 3, 'EMPATE'],
+  ])('%i × %i → %s', (homeGoals, awayGoals, expected) => {
+    expect(matchOutcome(homeGoals, awayGoals)).toBe(expected);
   });
 });

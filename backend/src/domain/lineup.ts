@@ -1,6 +1,11 @@
-import { Position } from './player';
+import { MatchCondition } from './match-engine';
+import { Condition, Position } from './player';
 
-export type Formation = '3-1' | '2-2' | '2-1-1' | '1-2-1';
+export const FORMATIONS = ['3-1', '2-2', '2-1-1', '1-2-1'] as const;
+export type Formation = (typeof FORMATIONS)[number];
+
+/** RN19: 1 goleiro e 4 jogadores de linha. */
+export const LINEUP_SIZE = 5;
 
 interface Sectors {
   defense: number;
@@ -33,4 +38,22 @@ export function fitsFormation(
     count('MEI') === sectors.midfield &&
     count('ATA') === sectors.attack
   );
+}
+
+/** RN19 e RN20: jogador DOENTE não é escalado e não joga. */
+export function canPlay<T extends { condition: Condition }>(
+  player: T,
+): player is T & { condition: MatchCondition } {
+  return player.condition !== 'DOENTE';
+}
+
+/**
+ * RN19 e RN20: completa com a formação salva e os 5 titulares. Titular vendido ou que passou a
+ * DOENTE deixa a escalação incompleta, e o clube não joga até escalar de novo.
+ */
+export function isLineupComplete(
+  formation: Formation | null,
+  starters: readonly { condition: Condition }[],
+): boolean {
+  return formation !== null && starters.filter(canPlay).length === LINEUP_SIZE;
 }
