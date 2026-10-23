@@ -142,10 +142,12 @@ npm run format:check   # Prettier; só verifica, sem alterar arquivos
 │   └── test/                testes das respostas HTTP (e2e), num banco separado
 ├── frontend/                interface web (React e Vite)
 │   └── src/
-│       ├── api/             cliente HTTP: único lugar que chama a API
-│       ├── components/      componentes compartilhados (layout e cabeçalho de página)
-│       ├── features/        uma pasta por tela
-│       ├── lib/             configuração do TanStack Query
+│       ├── api/             cliente HTTP e funções por recurso: único lugar que chama a API
+│       ├── hooks/           consultas e ações (TanStack Query) e as consultas atualizadas depois de cada ação
+│       ├── components/      compartilhados: tabela, campo de formulário, aviso, janela, confirmação e paginação
+│       ├── features/        uma pasta por tela: jogadores, clubes, página do clube, partidas e classificação
+│       ├── lib/             moeda, data em Brasília, data digitada com -03:00, validação e TanStack Query
+│       ├── test/            utilitários dos testes: API simulada, dados de exemplo e renderização
 │       └── routes.tsx       rotas da interface
 ├── docs/                    enunciado, barema, plano, checklist e diário de uso de IA
 └── docker-compose.yml       PostgreSQL 16
@@ -292,6 +294,27 @@ Detalhes que o enunciado deixou à escolha do candidato:
   - histórico de partidas: `club_id` de um clube que existe, mas ainda não jogou, responde `200` com `[]`;
   - classificação: calculada a cada consulta a partir do placar gravado em `partidas`; sem clubes, `[]`.
 - **Frontend:**
-  - o endereço inicial (`/`) abre a lista de jogadores;
+  - o endereço inicial (`/`) abre a lista de jogadores; a tela inicial do mockup, opcional, não foi feita;
   - uma consulta que falha por rede ou por erro do servidor é repetida uma vez;
-  - recusas da API (`4xx`) e ações nunca são repetidas.
+  - recusas da API (`4xx`) e ações nunca são repetidas;
+  - nenhum valor que a API devolve é recalculado nem reordenado na tela; a única conta é o custo total da
+    compra (valor + taxa), que o enunciado permite;
+  - depois de cada uma das 9 ações, as consultas afetadas são pedidas de novo à API (por exemplo, a venda
+    atualiza jogadores, clubes, histórico e escalação), e a tela mostra os dados novos sem recarregar;
+  - o botão de envio fica desabilitado do clique até a resposta, então o clique duplo envia um só pedido;
+  - os formulários validam antes do envio só os obrigatórios e os limites de um campo (tamanho dos nomes,
+    sigla com 3 letras maiúsculas, faixas numéricas, formação e as 5 vagas, mandante e visitante); as regras
+    que cruzam campos ou dependem do banco ficam na API, e a tela mostra o `message` dela;
+  - as recusas que a tela poderia prever (só livres com clube, `DOENTE` direto para `APTO`, posição de
+    jogador com clube e idade menor) também vão para a API, e a tela mostra o `message`;
+  - na lista de jogadores, a busca, os filtros e a ordenação valem ao clicar em Filtrar, e a página volta
+    para a 1;
+  - o fim da fidelidade é digitado num campo de data e hora, tratado como horário de Brasília e enviado como
+    `AAAA-MM-DDTHH:MM-03:00`; as datas exibidas usam o fuso `America/Sao_Paulo`, qualquer que seja o do
+    computador;
+  - no histórico, o filtro por jogador lista os jogadores que aparecem no histórico do clube, e o CSV é
+    baixado como a API o devolve, com o nome `historico-clube-{id}.csv`;
+  - na escalação, cada vaga da formação lista só os jogadores do elenco da posição daquele setor, sem os
+    `DOENTE` e sem os já escolhidos em outra vaga; a escalação salva aparece como a API a devolve;
+  - o Zod, previsto no plano, não foi usado: o `@hookform/resolvers` 6 dava conflito de dependências no
+    `npm install`, e o React Hook Form valida com as regras próprias dele.
