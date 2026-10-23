@@ -36,6 +36,18 @@ export async function request<T>(
   return (await response.json()) as T;
 }
 
+/** Baixa um arquivo (como o CSV do histórico); a recusa chega em JSON, com o `message`. */
+export async function requestFile(
+  path: string,
+  query?: Record<string, QueryValue>,
+): Promise<Blob> {
+  const response = await send(buildUrl(path, query), 'GET', undefined);
+  if (!response.ok) {
+    throw new ApiError(response.status, await readErrorMessage(response));
+  }
+  return response.blob();
+}
+
 export function buildUrl(
   path: string,
   query: Record<string, QueryValue> = {},

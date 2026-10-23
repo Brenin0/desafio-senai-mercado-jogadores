@@ -1,8 +1,18 @@
+import { useState } from 'react';
 import { useParams } from 'react-router';
 import { PageHeader } from '../../components/PageHeader.tsx';
+import { Tabs } from '../../components/Tabs.tsx';
 import { useClub } from '../../hooks/useClubs.ts';
 import { formatMoney } from '../../lib/format.ts';
 import { SquadSection } from './SquadSection.tsx';
+import { TransactionsSection } from './TransactionsSection.tsx';
+
+type ClubTab = 'squad' | 'history';
+
+const TABS: { id: ClubTab; label: string }[] = [
+  { id: 'squad', label: 'Elenco' },
+  { id: 'history', label: 'Histórico' },
+];
 
 function Stat({ label, value }: { label: string; value: number | undefined }) {
   return (
@@ -15,10 +25,11 @@ function Stat({ label, value }: { label: string; value: number | undefined }) {
   );
 }
 
-/** Página do clube: caixa, valor do elenco, patrimônio e elenco, como a API devolve. */
+/** Página do clube: caixa, valor do elenco, patrimônio e as abas do elenco e do histórico. */
 export function ClubPage() {
   const clubId = Number(useParams().id);
   const club = useClub(clubId);
+  const [tab, setTab] = useState<ClubTab>('squad');
 
   return (
     <div className="space-y-6">
@@ -30,11 +41,20 @@ export function ClubPage() {
         <Stat label="Valor do elenco" value={club.data?.squad_value} />
         <Stat label="Patrimônio" value={club.data?.net_worth} />
       </dl>
-      <SquadSection
-        players={club.data?.players}
-        isLoading={club.isLoading}
-        error={club.error}
+      <Tabs
+        label="Seções do clube"
+        tabs={TABS}
+        active={tab}
+        onChange={setTab}
       />
+      {tab === 'squad' && (
+        <SquadSection
+          players={club.data?.players}
+          isLoading={club.isLoading}
+          error={club.error}
+        />
+      )}
+      {tab === 'history' && <TransactionsSection clubId={clubId} />}
     </div>
   );
 }

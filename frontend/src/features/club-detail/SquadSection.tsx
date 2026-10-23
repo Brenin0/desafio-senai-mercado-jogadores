@@ -64,7 +64,6 @@ export function SquadSection({ players, isLoading, error }: SquadSectionProps) {
 
   return (
     <section className="space-y-3">
-      <h2 className="text-lg font-semibold text-slate-900">Elenco</h2>
       <DataTable
         caption="Elenco do clube"
         columns={columns}

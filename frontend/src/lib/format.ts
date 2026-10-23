@@ -8,6 +8,11 @@ export function formatMoney(value: number): string {
   return moneyFormatter.format(value);
 }
 
+/** Variação do caixa com sinal: "+" para entrada e "-" para saída. */
+export function formatSignedMoney(value: number): string {
+  return value > 0 ? `+${formatMoney(value)}` : formatMoney(value);
+}
+
 const dateTimeFormatter = new Intl.DateTimeFormat('pt-BR', {
   timeZone: 'America/Sao_Paulo',
   day: '2-digit',

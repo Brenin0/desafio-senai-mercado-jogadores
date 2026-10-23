@@ -89,3 +89,16 @@ export interface Sale extends Transaction {
   contract_status: string;
   club_cash: number;
 }
+
+export interface TransactionSummary {
+  total_spent: number;
+  total_received: number;
+  total_fees: number;
+  total_penalties: number;
+  total_profit: number;
+}
+
+export interface TransactionHistory {
+  data: Transaction[];
+  summary: TransactionSummary;
+}
