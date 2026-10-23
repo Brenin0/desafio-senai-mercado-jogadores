@@ -57,9 +57,14 @@ export function canPlay<T extends { condition: Condition }>(
  * RN19 e RN20: completa com a formação salva e os 5 titulares. Titular vendido ou que passou a
  * DOENTE deixa a escalação incompleta, e o clube não joga até escalar de novo.
  */
-export function isLineupComplete(
-  formation: Formation | null,
-  starters: readonly { condition: Condition }[],
-): boolean {
-  return formation !== null && starters.filter(canPlay).length === LINEUP_SIZE;
+export function isLineupComplete<
+  T extends {
+    formation: Formation | null;
+    players: readonly { condition: Condition }[];
+  },
+>(lineup: T): lineup is T & { formation: Formation } {
+  return (
+    lineup.formation !== null &&
+    lineup.players.filter(canPlay).length === LINEUP_SIZE
+  );
 }

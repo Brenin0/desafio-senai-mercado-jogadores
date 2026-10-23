@@ -6,12 +6,12 @@ import { LineupResponseDto } from './dto/lineup-response.dto';
 /** RN19: a escalação com os titulares na ordem do elenco (RN11), cada um como em GET /players/{id}. */
 export function toLineupResponse(
   clubId: number,
-  { formation, players }: Lineup,
+  lineup: Lineup,
 ): LineupResponseDto {
   return {
     club_id: clubId,
-    formation,
-    complete: isLineupComplete(formation, players),
-    players: [...players].sort(compareRosterOrder).map(toPlayerResponse),
+    formation: lineup.formation,
+    complete: isLineupComplete(lineup),
+    players: [...lineup.players].sort(compareRosterOrder).map(toPlayerResponse),
   };
 }

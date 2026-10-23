@@ -62,8 +62,10 @@ describe('RN19 – titular DOENTE: não é escalado e não joga', () => {
 });
 
 describe('RN19 – escalação completa: formação salva e os 5 titulares', () => {
-  const starters = (...conditions: Condition[]) =>
-    conditions.map((condition) => ({ condition }));
+  const lineup = (formation: Formation | null, ...conditions: Condition[]) => ({
+    formation,
+    players: conditions.map((condition) => ({ condition })),
+  });
 
   it('a escalação tem 5 titulares', () => {
     expect(LINEUP_SIZE).toBe(5);
@@ -72,34 +74,30 @@ describe('RN19 – escalação completa: formação salva e os 5 titulares', () 
   it('formação e 5 titulares APTO ou MAL_CONDICIONADO: completa', () => {
     expect(
       isLineupComplete(
-        '2-1-1',
-        starters('APTO', 'APTO', 'MAL_CONDICIONADO', 'APTO', 'APTO'),
+        lineup('2-1-1', 'APTO', 'APTO', 'MAL_CONDICIONADO', 'APTO', 'APTO'),
       ),
     ).toBe(true);
   });
 
   it('o clube nasce sem escalação: sem formação e sem titulares, incompleta', () => {
-    expect(isLineupComplete(null, [])).toBe(false);
+    expect(isLineupComplete(lineup(null))).toBe(false);
   });
 
   it('titular vendido sai: a mesma formação com 4 titulares, incompleta', () => {
     expect(
-      isLineupComplete('2-1-1', starters('APTO', 'APTO', 'APTO', 'APTO')),
+      isLineupComplete(lineup('2-1-1', 'APTO', 'APTO', 'APTO', 'APTO')),
     ).toBe(false);
   });
 
   it('5 titulares sem formação salva: incompleta', () => {
     expect(
-      isLineupComplete(null, starters('APTO', 'APTO', 'APTO', 'APTO', 'APTO')),
+      isLineupComplete(lineup(null, 'APTO', 'APTO', 'APTO', 'APTO', 'APTO')),
     ).toBe(false);
   });
 
   it('titular DOENTE não conta: incompleta', () => {
     expect(
-      isLineupComplete(
-        '3-1',
-        starters('APTO', 'APTO', 'APTO', 'APTO', 'DOENTE'),
-      ),
+      isLineupComplete(lineup('3-1', 'APTO', 'APTO', 'APTO', 'APTO', 'DOENTE')),
     ).toBe(false);
   });
 });
