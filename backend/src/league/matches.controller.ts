@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, Res } from '@nestjs/common';
+import { Body, Controller, Get, Post, Query, Res } from '@nestjs/common';
 import {
   ApiBadRequestResponse,
   ApiConflictResponse,
@@ -11,7 +11,11 @@ import type { Response } from 'express';
 import { ErrorResponseDto } from '../common/http/error-response.dto';
 import { resourcePath } from '../common/http/resource-path';
 import { CreateMatchDto } from './dto/create-match.dto';
-import { MatchResponseDto } from './dto/match-response.dto';
+import { ListMatchesQueryDto } from './dto/list-matches-query.dto';
+import {
+  MatchResponseDto,
+  MatchSummaryResponseDto,
+} from './dto/match-response.dto';
 import { MatchIdParam } from './match-id.param';
 import { MatchesService } from './matches.service';
 
@@ -46,6 +50,25 @@ export class MatchesController {
     const match = await this.matches.play(body);
     response.location(resourcePath('matches', match.id));
     return match;
+  }
+
+  @Get()
+  @ApiOkResponse({
+    type: [MatchSummaryResponseDto],
+    description: 'Da mais recente para a mais antiga, sem os duelos',
+  })
+  @ApiBadRequestResponse({
+    type: ErrorResponseDto,
+    description: 'club_id fora da forma aceita ou vazio',
+  })
+  @ApiNotFoundResponse({
+    type: ErrorResponseDto,
+    description: 'Clube do filtro inexistente',
+  })
+  list(
+    @Query() query: ListMatchesQueryDto,
+  ): Promise<MatchSummaryResponseDto[]> {
+    return this.matches.list(query);
   }
 
   @Get(':id')

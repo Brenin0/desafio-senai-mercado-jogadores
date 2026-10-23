@@ -40,7 +40,7 @@ function toDuelResponse(duel: Duel): DuelResponseDto {
 }
 
 /** A partida como foi gravada; o result sai dos gols, pela mesma regra do motor (RN20). */
-function toMatchSummaryResponse(match: Match): MatchSummaryResponseDto {
+export function toMatchSummaryResponse(match: Match): MatchSummaryResponseDto {
   return {
     id: match.id,
     played_at: formatBrasiliaDateTime(match.playedAt),

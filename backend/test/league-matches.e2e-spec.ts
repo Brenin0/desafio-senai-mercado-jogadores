@@ -1,6 +1,6 @@
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { PrismaService } from '../src/prisma/prisma.service';
-import { apiClient } from './api-client';
+import { apiClient, TeamWithLineup } from './api-client';
 import { createTestApp } from './create-test-app';
 import { clearDatabase } from './database';
 import { expectRefusal } from './expectations';
@@ -8,18 +8,11 @@ import {
   AGUIAS_STARTERS,
   DELTA_STARTERS,
   StarterSpec,
-  starterBody,
 } from './league.fixtures';
 import { TestClock } from './test-clock';
 
 /** Momento da partida de 2.4.2: 2026-11-12T15:00:00-03:00. */
 const NOW = new Date('2026-11-12T18:00:00Z');
-
-interface Team {
-  clubId: number;
-  /** Ids dos titulares, na ordem em que foram cadastrados. */
-  ids: number[];
-}
 
 interface DuelSideBody {
   player_id: number;
@@ -68,34 +61,19 @@ describe('Partida (2.4.2, RN20)', () => {
     await app.close();
   });
 
-  /** Cria o clube, compra os titulares e escala os 5 na formação. */
-  async function clubWithLineup(
+  const clubWithLineup = (
     name: string,
     acronym: string,
     starters: StarterSpec[],
-    formation = '2-1-1',
-  ): Promise<Team> {
-    const clubId = await api.createClub(name, acronym);
-    const ids: number[] = [];
-    for (const starter of starters) {
-      ids.push(
-        await api.signPlayer(
-          clubId,
-          starterBody(starter.name, starter.position, starter.values),
-          clock.now(),
-        ),
-      );
-    }
-    const response = await api.setLineup(clubId, {
-      formation,
-      player_ids: ids,
-    });
-    expect(response.status).toBe(200);
-    return { clubId, ids };
-  }
+    formation?: string,
+  ) =>
+    api.createClubWithLineup(name, acronym, starters, clock.now(), formation);
 
   /** O cenário da RN20: Águias FC (com o LAT MAL_CONDICIONADO) e Delta FC, os dois no 2-1-1. */
-  async function aguiasAndDelta(): Promise<{ aguias: Team; delta: Team }> {
+  async function aguiasAndDelta(): Promise<{
+    aguias: TeamWithLineup;
+    delta: TeamWithLineup;
+  }> {
     const aguias = await clubWithLineup('Águias FC', 'AGU', AGUIAS_STARTERS);
     await api.changeCondition(aguias.ids[2], 'MAL_CONDICIONADO');
     const delta = await clubWithLineup('Delta FC', 'DFC', DELTA_STARTERS);

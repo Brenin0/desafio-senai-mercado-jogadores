@@ -14,10 +14,14 @@ import {
   TransactionRunner,
 } from '../prisma/transaction-runner';
 import { CreateMatchDto } from './dto/create-match.dto';
-import { MatchResponseDto } from './dto/match-response.dto';
+import { ListMatchesQueryDto } from './dto/list-matches-query.dto';
+import {
+  MatchResponseDto,
+  MatchSummaryResponseDto,
+} from './dto/match-response.dto';
 import { LineupRepository } from './lineup.repository';
 import { incompleteLineupMessage, MATCH_NOT_FOUND } from './match.errors';
-import { toMatchResponse } from './match.presenter';
+import { toMatchResponse, toMatchSummaryResponse } from './match.presenter';
 import { MatchesRepository } from './matches.repository';
 
 /** Os titulares que entram na partida e a formação do momento. */
@@ -67,6 +71,17 @@ export class MatchesService {
       );
       return toMatchResponse(match);
     });
+  }
+
+  /** RN21: histórico de partidas, sem os duelos; clube do filtro inexistente → 404. */
+  async list({
+    club_id,
+  }: ListMatchesQueryDto): Promise<MatchSummaryResponseDto[]> {
+    if (club_id !== undefined && !(await this.clubs.exists(club_id))) {
+      throw new NotFoundException(CLUB_NOT_FOUND);
+    }
+    const matches = await this.matches.findAll(club_id);
+    return matches.map(toMatchSummaryResponse);
   }
 
   /** RN21: a partida como foi gravada, com os 6 duelos. */
