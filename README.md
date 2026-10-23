@@ -13,7 +13,7 @@ partidas e classificação.
 | Ferramenta | Versão | Observação |
 | --- | --- | --- |
 | Node.js (com npm) | 22 LTS (testado com 22.23 e npm 10.9) | backend e frontend |
-| Docker Engine com Docker Compose (comando `docker compose`) | testado com Docker 29 | inicia o banco |
+| Docker Engine com Docker Compose (comando `docker compose`) | testado com Docker 29 e Compose 2 | inicia o banco (e, no [Docker Compose completo](#docker-compose-banco-api-e-interface-com-um-comando), também a API e a interface) |
 | PostgreSQL | 16 | imagem pública `postgres:16-alpine`, iniciada pelo `docker compose`; não precisa instalar |
 
 ## Como executar (Ubuntu 24.04)
@@ -119,6 +119,26 @@ npm run format:check   # Prettier; só verifica, sem alterar arquivos
   método, caminho, status e duração. Exemplo:
   `[Nest] 23960  - 20/10/2026, 23:16:15     LOG [HTTP] GET /api/v1/players 200 9ms`
 
+## Docker Compose: banco, API e interface com um comando
+
+Caminho opcional (diferencial). O caminho principal é o de [Como executar](#como-executar-ubuntu-2404).
+Com as portas 3000, 5173 e 5433 livres (sem a API e o frontend dos passos acima rodando), na raiz do
+repositório:
+
+```bash
+docker compose --profile app up -d --build --wait
+```
+
+O comando constrói as imagens a partir deste repositório (só com as imagens públicas `node:22-alpine` e
+`postgres:16-alpine`), inicia o banco, aplica as migrations e sobe a API e a interface. Termina quando a
+API e a interface respondem.
+
+- Origem da API: **`http://localhost:3000`**
+- URL do frontend: **`http://localhost:5173`**
+
+Para parar: `docker compose --profile app down`. O banco é o mesmo volume do caminho principal; para
+recriá-lo do zero, use o `npm run db:reset` de [Banco de dados](#banco-de-dados) com o banco no ar.
+
 ## Estrutura de pastas
 
 ```text
@@ -150,7 +170,7 @@ npm run format:check   # Prettier; só verifica, sem alterar arquivos
 │       ├── test/            utilitários dos testes: API simulada, dados de exemplo e renderização
 │       └── routes.tsx       rotas da interface
 ├── docs/                    enunciado, barema, plano, checklist e diário de uso de IA
-└── docker-compose.yml       PostgreSQL 16
+└── docker-compose.yml       PostgreSQL 16; no profile app, também a API e a interface (Dockerfile de cada pasta)
 ```
 
 ## Bibliotecas
@@ -318,3 +338,61 @@ Detalhes que o enunciado deixou à escolha do candidato:
     `DOENTE` e sem os já escolhidos em outra vaga; a escalação salva aparece como a API a devolve;
   - o Zod, previsto no plano, não foi usado: o `@hookform/resolvers` 6 dava conflito de dependências no
     `npm install`, e o React Hook Form valida com as regras próprias dele.
+
+## Funcionalidades não implementadas
+
+Nenhuma das funcionalidades obrigatórias do backend e do frontend ficou de fora.
+
+Ficaram de fora só itens opcionais ou que vão além do enunciado:
+
+- a tela inicial do mockup, os contadores do menu e as últimas partidas na classificação, que o enunciado
+  declara opcionais;
+- a carga de dados de exemplo (`db:seed`): o banco começa vazio, como o enunciado pede;
+- uma trava contra dois pedidos simultâneos de escalação ou de partida do mesmo clube (a compra e a venda
+  têm essa proteção). A interface envia um pedido por vez, com o botão desabilitado até a resposta.
+
+## Uso de inteligência artificial
+
+**Ferramentas.** Claude Code (Anthropic), no editor, para gerar e revisar código, testes e documentação;
+e o Claude, no chat, para montar o plano técnico ([`docs/plano.md`](docs/plano.md)) a partir do
+enunciado e do barema. O registro de cada passo, com o que foi gerado e o que eu pedi para mudar, está em
+[`docs/ia.md`](docs/ia.md).
+
+**Como trabalhei.** Fiz o papel de orquestrador: decidi a arquitetura (camadas do NestJS, regras de
+cálculo puras em `domain/`, um cálculo por arquivo, frontend com chamadas só em `api/` e hooks), a ordem
+das fases e as prioridades pelo barema, e escrevi as regras de trabalho nos arquivos `CLAUDE.md` (raiz,
+`backend/` e `frontend/`): seguir o enunciado ao pé da letra, nunca inventar regra e perguntar citando o
+trecho na dúvida, testes antes do código nas regras de negócio, nenhum código comentado ou sem uso. Em
+cada fase, a IA apresentava um plano curto e esperava a minha aprovação; depois trabalhava em passos
+pequenos, rodava lint, formatação e testes e propunha a mensagem do commit. Eu revisei e fiz cada commit e
+cada push.
+
+**Onde foi usada e por quê.**
+
+| Onde | O que a IA gerou, sob as regras acima |
+| --- | --- |
+| `backend/src/domain` | Valor de mercado, overall, valor base, taxa, multa e dias restantes, comissão, partida e classificação, com os testes escritos antes, usando as tabelas do enunciado como casos literais. |
+| `backend/src/players`, `clubs`, `market`, `league`, `common` | Controllers, services, repositories, DTOs e validadores dos 19 endpoints, filtro central de erros e logs; testes e2e com os exemplos do enunciado campo a campo. |
+| `backend/prisma` | As 7 tabelas com os nomes do enunciado e as migrations. |
+| `frontend/src` | Cliente HTTP, hooks do TanStack Query, componentes compartilhados, as telas e os testes de componente. |
+| `docker-compose.yml`, Dockerfiles, `README.md`, `docs/` | Banco no Docker, Docker Compose completo, checklist dos itens do barema, diário de IA e este README. |
+
+O motivo foi o prazo: com a IA gerando o código sob regras e revisão minhas, deu para cobrir todos os
+itens do barema com testes, em vez de escolher partes.
+
+**O que aceitei, alterei ou descartei** (exemplos de [`docs/ia.md`](docs/ia.md)):
+
+- **Aceitei** os planos das fases 3, 4, 5 e 7 como propostos, depois de conferir contra o enunciado.
+- **Alterei:** pedi um `.gitignore` único na raiz (Fase 1); pedi para documentar só o necessário no
+  README da Fase 1; escolhi deixar a carga de dados de exemplo para depois da Fase 4, e ela acabou não
+  entrando; pedi que a trava contra pedidos simultâneos na liga ficasse registrada como pendência (Fase
+  6); pedi uma validação completa ao fim das fases 4 a 7, com o roteiro dos exemplos contra a API
+  compilada.
+- **Descartei:** o Zod, previsto no plano, porque o `@hookform/resolvers` 6 dava conflito de dependências
+  no `npm install`; quatro bibliotecas de desenvolvimento sem uso que vieram do gerador do NestJS
+  (`ts-loader`, `source-map-support`, `ts-node` e `tsconfig-paths`).
+- **Erros da IA pegos na revisão e corrigidos:** valores de mercado calculados de cabeça errados em
+  expectativas de teste (Fase 4); o Swagger que dava 500 depois do build, por causa do acento no caminho
+  da pasta (Fase 4); duas vendas simultâneas do mesmo jogador que davam 500 (Fase 5); uma proteção contra
+  compra e venda simultâneas que nenhum teste pegava (Fase 5, achada por teste de mutação); um script de
+  edição que duplicou uma função do frontend (Fase 7).
