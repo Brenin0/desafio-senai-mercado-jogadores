@@ -1,12 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { jsonResponse } from '../test/api-mock.ts';
 import { API_BASE_URL, ApiError, buildUrl, request } from './http.ts';
-
-function jsonResponse(body: unknown, status = 200): Response {
-  return new Response(JSON.stringify(body), {
-    status,
-    headers: { 'Content-Type': 'application/json' },
-  });
-}
 
 describe('buildUrl', () => {
   it('acrescenta /api/v1 à origem da API, sem barra no final', () => {

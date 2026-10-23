@@ -7,7 +7,7 @@ visual não conta ponto; fluxo e informações contam).
 ## Stack
 
 React 19 + Vite (`react-ts`), TypeScript strict, React Router (modo biblioteca), TanStack Query,
-React Hook Form + Zod, Tailwind CSS, Vitest + Testing Library. Gerenciador: npm.
+React Hook Form (com as regras de validação próprias dele, sem Zod), Tailwind CSS, Vitest + Testing Library. Gerenciador: npm.
 A origem da API vem de `VITE_API_URL` (listada no `.env.example`).
 
 ## Estrutura

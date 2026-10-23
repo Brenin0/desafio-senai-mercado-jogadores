@@ -184,6 +184,7 @@ PostgreSQL 16.
 | `vite`, `@vitejs/plugin-react` | Vite, da stack obrigatória: servidor de desenvolvimento e build. |
 | `react-router` | Rotas entre as telas, no modo biblioteca. |
 | `@tanstack/react-query` | Busca e cache dos dados da API, com estados de carregamento e erro e atualização da tela depois de cada ação. |
+| `react-hook-form` | Estado dos formulários e validação antes do envio (obrigatórios, tamanho dos textos e faixas numéricas), com a mensagem junto ao campo. Usado com as regras próprias dele, sem Zod: o `@hookform/resolvers` 6 entra em conflito de dependências no `npm install`. |
 | `tailwindcss`, `@tailwindcss/vite` | Estilo da interface. |
 | `typescript` | Linguagem do projeto. |
 | `vitest`, `jsdom` | Testes automatizados, com um navegador simulado. |
