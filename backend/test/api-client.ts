@@ -145,5 +145,7 @@ export function apiClient(app: NestExpressApplication) {
 
     listMatches: (query = '') =>
       request(server()).get(`/api/v1/matches${query}`),
+
+    standings: () => request(server()).get('/api/v1/standings'),
   };
 }
