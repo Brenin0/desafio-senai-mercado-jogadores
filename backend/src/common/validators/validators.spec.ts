@@ -17,7 +17,13 @@ import {
   HasWordCountBetween,
   IsNormalizedText,
 } from './text.validators';
-import { IsIntegerBetween, IsOneOf, IsRequired } from './value.validators';
+import {
+  IsDifferentFrom,
+  IsDistinctIdList,
+  IsIntegerBetween,
+  IsOneOf,
+  IsRequired,
+} from './value.validators';
 
 type Outcome<T> = { accepted: T } | { refused: string };
 
@@ -122,6 +128,22 @@ class HistoryFiltersDto {
   @IsOptional()
   @IsQueryList(['COMPRA', 'VENDA'])
   type?: string;
+}
+
+class LineupDto {
+  @IsRequired()
+  @IsDistinctIdList(5)
+  player_ids!: number[];
+}
+
+class MatchDto {
+  @IsRequired()
+  @IsIntegerBetween(1)
+  home_club_id!: number;
+
+  @IsRequired()
+  @applyDecorators(IsIntegerBetween(1), IsDifferentFrom('home_club_id'))
+  away_club_id!: number;
 }
 
 describe('IsNormalizedText, HasWordCountBetween e HasNoDigits (V4 e Limites)', () => {
@@ -467,5 +489,129 @@ describe('IsQueryList (RN17, type do histórico)', () => {
     await expect(
       validate(HistoryFiltersDto, { type: ['COMPRA', 'VENDA'] }, 'query'),
     ).resolves.toHaveProperty('refused');
+  });
+});
+
+describe('IsDistinctIdList (RN19, player_ids da escalação)', () => {
+  it('aceita 5 ids distintos, inteiros positivos, em qualquer ordem', async () => {
+    await expect(
+      validate(LineupDto, { player_ids: [34, 31, 30, 33, 32] }),
+    ).resolves.toEqual({ accepted: { player_ids: [34, 31, 30, 33, 32] } });
+  });
+
+  it('V2: aceita 30.0 como o inteiro 30', async () => {
+    await expect(
+      validate(
+        LineupDto,
+        JSON.parse('{"player_ids": [34, 31, 30.0, 33, 32]}') as object,
+      ),
+    ).resolves.toEqual({ accepted: { player_ids: [34, 31, 30, 33, 32] } });
+  });
+
+  it.each([
+    ['texto', '34,31,30,33,32', 'player_ids deve ser uma lista'],
+    ['número', 34, 'player_ids deve ser uma lista'],
+    ['objeto', { 0: 34 }, 'player_ids deve ser uma lista'],
+    ['lista vazia', [], 'player_ids deve ter exatamente 5 ids'],
+    ['4 ids', [34, 31, 30, 33], 'player_ids deve ter exatamente 5 ids'],
+    ['6 ids', [34, 31, 30, 33, 32, 35], 'player_ids deve ter exatamente 5 ids'],
+    [
+      'id em texto',
+      [34, 31, '30', 33, 32],
+      'player_ids deve ter só números inteiros maiores ou iguais a 1',
+    ],
+    [
+      'id com parte fracionária',
+      [34, 31, 1.5, 33, 32],
+      'player_ids deve ter só números inteiros maiores ou iguais a 1',
+    ],
+    [
+      'id 0',
+      [34, 31, 0, 33, 32],
+      'player_ids deve ter só números inteiros maiores ou iguais a 1',
+    ],
+    [
+      'id negativo',
+      [34, 31, -1, 33, 32],
+      'player_ids deve ter só números inteiros maiores ou iguais a 1',
+    ],
+    [
+      'id nulo',
+      [34, 31, null, 33, 32],
+      'player_ids deve ter só números inteiros maiores ou iguais a 1',
+    ],
+    [
+      'id acima de 2.147.483.647',
+      [34, 31, 2147483648, 33, 32],
+      'player_ids deve ter só números inteiros maiores ou iguais a 1',
+    ],
+    [
+      'id repetido',
+      [34, 31, 34, 33, 32],
+      'player_ids não pode ter ids repetidos',
+    ],
+  ])('recusa %s', async (_, player_ids, message) => {
+    await expect(validate(LineupDto, { player_ids })).resolves.toEqual({
+      refused: message,
+    });
+  });
+
+  it.each([
+    ['ausente', {}],
+    ['nulo', { player_ids: null }],
+  ])('V6: recusa player_ids %s', async (_, body) => {
+    await expect(validate(LineupDto, body)).resolves.toEqual({
+      refused: 'player_ids é obrigatório',
+    });
+  });
+});
+
+describe('IsDifferentFrom (RN20, mandante e visitante)', () => {
+  it('aceita clubes diferentes', async () => {
+    await expect(
+      validate(MatchDto, { home_club_id: 1, away_club_id: 2 }),
+    ).resolves.toEqual({ accepted: { home_club_id: 1, away_club_id: 2 } });
+  });
+
+  it('recusa o mandante igual ao visitante', async () => {
+    await expect(
+      validate(MatchDto, { home_club_id: 1, away_club_id: 1 }),
+    ).resolves.toEqual({
+      refused: 'away_club_id deve ser diferente de home_club_id',
+    });
+  });
+
+  it('V2: 1.0 é o mesmo clube que 1', async () => {
+    await expect(
+      validate(
+        MatchDto,
+        JSON.parse('{"home_club_id": 1, "away_club_id": 1.0}') as object,
+      ),
+    ).resolves.toEqual({
+      refused: 'away_club_id deve ser diferente de home_club_id',
+    });
+  });
+
+  it('confere o formato antes da diferença: dois 0 são recusados pelo formato', async () => {
+    await expect(
+      validate(MatchDto, { home_club_id: 0, away_club_id: 0 }),
+    ).resolves.toEqual({
+      refused:
+        'home_club_id deve ser um número inteiro maior ou igual a 1; away_club_id deve ser um número inteiro maior ou igual a 1',
+    });
+  });
+
+  it('texto "1" no visitante é recusado pelo formato, não pela diferença', async () => {
+    await expect(
+      validate(MatchDto, { home_club_id: 2, away_club_id: '1' }),
+    ).resolves.toEqual({
+      refused: 'away_club_id deve ser um número inteiro maior ou igual a 1',
+    });
+  });
+
+  it('V6: recusa o visitante ausente', async () => {
+    await expect(validate(MatchDto, { home_club_id: 1 })).resolves.toEqual({
+      refused: 'away_club_id é obrigatório',
+    });
   });
 });
