@@ -20,8 +20,8 @@ export interface ClubWithPlayers {
 export class ClubsRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  async exists(id: number): Promise<boolean> {
-    return (await this.prisma.club.count({ where: { id } })) > 0;
+  async exists(id: number, db: DatabaseClient = this.prisma): Promise<boolean> {
+    return (await db.club.count({ where: { id } })) > 0;
   }
 
   count(): Promise<number> {

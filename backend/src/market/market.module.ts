@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ClubsModule } from '../clubs/clubs.module';
-import { LeagueModule } from '../league/league.module';
+import { LineupDataModule } from '../league/lineup-data.module';
 import { PlayersModule } from '../players/players.module';
 import { ContractsRepository } from './contracts.repository';
 import { MarketController } from './market.controller';
@@ -10,7 +10,7 @@ import { TransactionsRepository } from './transactions.repository';
 import { TransactionsService } from './transactions.service';
 
 @Module({
-  imports: [PlayersModule, ClubsModule, LeagueModule],
+  imports: [PlayersModule, ClubsModule, LineupDataModule],
   controllers: [MarketController, TransactionsController],
   providers: [
     MarketService,

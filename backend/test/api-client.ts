@@ -9,21 +9,42 @@ export function toDateTimeInput(date: Date): string {
   return formatBrasiliaDateTime(date).replace(/:\d{2}-03:00$/, '-03:00');
 }
 
-/** Pedidos usados pelos testes do mercado, com os ajustes de valor feitos direto no banco. */
+const DAY = 24 * 60 * 60 * 1000;
+
+/** Pedidos usados pelos testes do mercado e da liga, com os ajustes de valor feitos direto no banco. */
 export function apiClient(app: NestExpressApplication) {
   const server = () => app.getHttpServer();
   const prisma = app.get(PrismaService);
 
+  /** Cadastra a partir do Meia Lua (APTO e 25 anos: valor de mercado igual ao valor base). */
+  async function createPlayer(
+    overrides: Record<string, unknown> = {},
+  ): Promise<number> {
+    const response = await request(server())
+      .post('/api/v1/players')
+      .send({ ...MEIA_LUA, ...overrides });
+    expect(response.status).toBe(201);
+    return (response.body as { id: number }).id;
+  }
+
   return {
-    /** Cadastra a partir do Meia Lua (APTO e 25 anos: valor de mercado igual ao valor base). */
-    async createPlayer(
-      overrides: Record<string, unknown> = {},
+    createPlayer,
+
+    /** Cadastra o jogador e o compra para o clube, com 1 ano de fidelidade a partir de `now`. */
+    async signPlayer(
+      clubId: number,
+      body: Record<string, unknown>,
+      now: Date,
     ): Promise<number> {
+      const playerId = await createPlayer(body);
       const response = await request(server())
-        .post('/api/v1/players')
-        .send({ ...MEIA_LUA, ...overrides });
-      expect(response.status).toBe(201);
-      return (response.body as { id: number }).id;
+        .post(`/api/v1/players/${playerId}/buy`)
+        .send({
+          club_id: clubId,
+          loyalty_until: toDateTimeInput(new Date(now.getTime() + 365 * DAY)),
+        });
+      expect(response.status).toBe(200);
+      return playerId;
     },
 
     /** Valor base exato, para chegar aos valores de mercado das tabelas do enunciado. */
@@ -75,5 +96,11 @@ export function apiClient(app: NestExpressApplication) {
 
     findClub: (clubId: number) =>
       request(server()).get(`/api/v1/clubs/${clubId}`),
+
+    setLineup: (clubId: number | string, body: object) =>
+      request(server()).put(`/api/v1/clubs/${clubId}/lineup`).send(body),
+
+    findLineup: (clubId: number | string) =>
+      request(server()).get(`/api/v1/clubs/${clubId}/lineup`),
   };
 }

@@ -61,6 +61,15 @@ export class PlayersRepository {
     return row && toPlayer(row);
   }
 
+  /** RN09: os jogadores não excluídos entre os ids pedidos, sem ordem. */
+  async findActiveByIds(ids: number[], db: DatabaseClient): Promise<Player[]> {
+    const rows = await db.player.findMany({
+      where: { id: { in: ids }, deletedAt: null },
+      select: PLAYER_COLUMNS,
+    });
+    return rows.map(toPlayer);
+  }
+
   /** Jogadores não excluídos que atendem aos filtros de coluna, sem ordem (RN07 e RN09). */
   async findActive(filters: PlayerColumnFilters): Promise<Player[]> {
     const rows = await this.prisma.player.findMany({
