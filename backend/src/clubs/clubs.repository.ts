@@ -5,6 +5,7 @@ import { ACTIVE_CONTRACT_STATUS, SquadMember } from '../domain/contract';
 import { Player } from '../domain/player';
 import { PLAYER_COLUMNS, toPlayer } from '../players/player-row';
 import { PrismaService } from '../prisma/prisma.service';
+import { DatabaseClient } from '../prisma/transaction-runner';
 import { CLUB_COLUMNS, toClub } from './club-row';
 
 /** Clube a gravar, com o nome normalizado da RN10, que tem índice único no banco. */
@@ -43,12 +44,34 @@ export class ClubsRepository {
     return toClub(row);
   }
 
-  async findById(id: number): Promise<Club | null> {
-    const row = await this.prisma.club.findUnique({
+  async findById(
+    id: number,
+    db: DatabaseClient = this.prisma,
+  ): Promise<Club | null> {
+    const row = await db.club.findUnique({
       where: { id },
       select: CLUB_COLUMNS,
     });
     return row && toClub(row);
+  }
+
+  /** RN14: quantidade de jogadores no elenco. */
+  countSquad(clubId: number, db: DatabaseClient): Promise<number> {
+    return db.player.count({ where: { clubId, deletedAt: null } });
+  }
+
+  /** RN12: desconta o custo da compra do caixa e devolve o caixa novo. */
+  async debitCash(
+    id: number,
+    amount: Decimal,
+    db: DatabaseClient,
+  ): Promise<Decimal> {
+    const { cash } = await db.club.update({
+      where: { id },
+      data: { cash: { decrement: amount } },
+      select: { cash: true },
+    });
+    return new Decimal(cash.toString());
   }
 
   /** Todos os clubes, cada um com os jogadores do elenco, sem ordem (RN11). */

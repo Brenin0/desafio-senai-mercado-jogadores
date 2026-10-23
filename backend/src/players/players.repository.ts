@@ -50,8 +50,11 @@ export class PlayersRepository {
   }
 
   /** RN09: jogador excluído conta como inexistente. */
-  async findActiveById(id: number): Promise<Player | null> {
-    const row = await this.prisma.player.findFirst({
+  async findActiveById(
+    id: number,
+    db: DatabaseClient = this.prisma,
+  ): Promise<Player | null> {
+    const row = await db.player.findFirst({
       where: { id, deletedAt: null },
       select: PLAYER_COLUMNS,
     });
@@ -93,6 +96,22 @@ export class PlayersRepository {
       select: PLAYER_COLUMNS,
     });
     return toPlayer(row);
+  }
+
+  /**
+   * RN12: o jogador entra no elenco só se ainda estiver livre; devolve false se outro pedido o
+   * comprou antes (D13).
+   */
+  async signForClub(
+    id: number,
+    clubId: number,
+    db: DatabaseClient,
+  ): Promise<boolean> {
+    const { count } = await db.player.updateMany({
+      where: { id, clubId: null, deletedAt: null },
+      data: { clubId },
+    });
+    return count === 1;
   }
 
   /** RN09: exclusão lógica; nada é apagado do banco. */

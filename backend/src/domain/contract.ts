@@ -1,8 +1,13 @@
 import Decimal from 'decimal.js';
 import { MILLISECONDS_PER_DAY } from './datetime';
+import { ClosedContractStatus } from './loyalty-penalty';
 import { Player } from './player';
 
 export const ACTIVE_CONTRACT_STATUS = 'ATIVO';
+
+/** RN12 e RN15: ATIVO na compra; RESCINDIDO (com multa) ou ENCERRADO (sem multa) na venda. */
+export type ContractStatus =
+  typeof ACTIVE_CONTRACT_STATUS | ClosedContractStatus;
 
 /** RN12: contrato criado na compra, com o valor de compra e o fim da fidelidade. */
 export interface ActiveContract {
