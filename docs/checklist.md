@@ -937,6 +937,10 @@ dos testes e2e (`passe_e2e`).
 **Adotadas na Fase 5** e registradas no README: D01 (compra e venda), D11, D12, D13 (também na venda) e
 D16.
 
+**Adotadas na Fase 6** e registradas no README: D01 (escalação e partida) e D11 (`played_at`). Pendente,
+a pedido: a proteção do D13 contra pedidos simultâneos na escalação e na partida (travar as linhas numa
+ordem fixa: jogadores, clube e escalação).
+
 ### Backend
 
 | # | Ponto em aberto | O que o enunciado diz | Proposta |

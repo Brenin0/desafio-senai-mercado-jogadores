@@ -129,7 +129,7 @@ npm run format:check   # Prettier; só verifica, sem alterar arquivos
 │   │   ├── common/          filtro global de erros, relógio, pipes, validadores reutilizáveis e middlewares
 │   │   ├── config/          validação das variáveis de ambiente e Swagger
 │   │   ├── domain/          regras de cálculo puras (sem NestJS e sem Prisma), uma por arquivo, com os testes
-│   │   ├── league/          liga (por enquanto, a saída do titular da escalação)
+│   │   ├── league/          liga: escalação, partidas com os 6 duelos e classificação
 │   │   ├── market/          mercado: compra, venda, histórico de transações e exportação CSV
 │   │   ├── players/         jogadores: controller, service, repository, DTOs e validadores
 │   │   ├── prisma/          conexão com o banco e transação usada pelos services
@@ -274,6 +274,22 @@ Detalhes que o enunciado deixou à escolha do candidato:
     `data` vazio e `summary` zerado;
   - CSV: `text/csv; charset=utf-8` e `Content-Disposition: attachment; filename="historico-clube-{id}.csv"`;
     os erros continuam em JSON, sem esses cabeçalhos.
+- **Liga (escalação, partidas e classificação):**
+  - ordem das recusas da escalação: primeiro o formato (`400`), depois a existência (`404`: clube da URL,
+    depois os jogadores, contando o excluído como inexistente), depois as regras (`409`): jogador fora do
+    elenco do clube, jogador `DOENTE` e posições que não fecham a formação;
+  - elenco, na escalação: os jogadores cujo clube é o da URL (os mesmos dos contratos `ATIVO`);
+  - o `PUT` da escalação troca a formação e os 5 titulares na mesma transação; o `criado_em` de cada
+    titular é o instante do servidor; `complete` é `true` só com a formação salva e os 5 titulares;
+  - ordem das recusas da partida: primeiro o formato (`400`, inclusive o mandante igual ao visitante),
+    depois a existência (`404`: mandante, depois visitante), depois a escalação completa (`409`: mandante,
+    depois visitante);
+  - partida: `played_at` é o instante do servidor, gravado com os milissegundos e devolvido sem eles; a
+    resposta do `POST /matches` e do `GET /matches/{id}` é montada a partir do que foi gravado;
+  - `result` não é coluna: sai dos gols gravados, pela mesma função do motor da partida;
+  - `club_name` das partidas é o nome do clube, que não muda, porque não há como editar clubes;
+  - histórico de partidas: `club_id` de um clube que existe, mas ainda não jogou, responde `200` com `[]`;
+  - classificação: calculada a cada consulta a partir do placar gravado em `partidas`; sem clubes, `[]`.
 - **Frontend:**
   - o endereço inicial (`/`) abre a lista de jogadores;
   - uma consulta que falha por rede ou por erro do servidor é repetida uma vez;
