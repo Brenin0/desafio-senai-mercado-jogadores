@@ -130,6 +130,7 @@ npm run format:check   # Prettier; só verifica, sem alterar arquivos
 │   │   ├── config/          validação das variáveis de ambiente e Swagger
 │   │   ├── domain/          regras de cálculo puras (sem NestJS e sem Prisma), uma por arquivo, com os testes
 │   │   ├── league/          liga (por enquanto, a saída do titular da escalação)
+│   │   ├── market/          mercado: compra, venda, histórico de transações e exportação CSV
 │   │   ├── players/         jogadores: controller, service, repository, DTOs e validadores
 │   │   ├── prisma/          conexão com o banco e transação usada pelos services
 │   │   ├── app.module.ts
@@ -255,6 +256,24 @@ Detalhes que o enunciado deixou à escolha do candidato:
   - Swagger: os campos cujo tipo é outra classe declaram o tipo no `@ApiProperty`; numa pasta com acento
     (como `C:\Users\Usuário`), o plugin do Swagger aponta esses tipos para um caminho de `src` que não
     existe depois do build, e o `/api/docs` deixaria de abrir.
+- **Mercado (compra, venda, histórico e CSV):**
+  - ordem das recusas da compra: primeiro o formato (`400`, inclusive o fim da fidelidade fora da janela),
+    depois a existência (`404`: jogador, depois clube), depois as regras (`409`): jogador que não está
+    livre, recompra pelo clube que já o vendeu, elenco com 12 jogadores e custo acima de 50% do caixa;
+    na venda, `404` e depois `409` para jogador livre;
+  - fim da fidelidade: estritamente depois do instante da compra e até 1.095 × 24 horas depois, inclusive;
+    como a entrada não tem segundos, o minuto atual já passou e é recusado;
+  - cada operação usa um único instante do servidor, com milissegundos: o mesmo das regras (janela da
+    fidelidade e dias restantes) é gravado em `criado_em`, `iniciado_em` e `encerrado_em`;
+  - pedidos simultâneos: a compra só põe o jogador no elenco se ele ainda estiver livre, e a venda só o
+    libera se ele ainda estiver no clube; o segundo pedido recebe `409`, sem gravar nada;
+  - recompra: qualquer venda anterior daquele clube com aquele jogador impede a compra;
+  - o caixa muda só pela variação gravada na transação (negativa na compra, positiva na venda), o que
+    mantém 300,00 + soma das variações = caixa atual;
+  - histórico: `player_id` de um jogador que existe, mas não tem transações no clube, responde `200` com
+    `data` vazio e `summary` zerado;
+  - CSV: `text/csv; charset=utf-8` e `Content-Disposition: attachment; filename="historico-clube-{id}.csv"`;
+    os erros continuam em JSON, sem esses cabeçalhos.
 - **Frontend:**
   - o endereço inicial (`/`) abre a lista de jogadores;
   - uma consulta que falha por rede ou por erro do servidor é repetida uma vez;

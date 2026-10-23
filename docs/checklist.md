@@ -934,6 +934,9 @@ aprovada.** Depois do seu ok, as aprovadas vão para "Decisões e premissas" do 
 e da escalação ficam para as Fases 5 e 6), D06, D07, D08, D09, D14 e D15. O D19 ganhou o banco separado
 dos testes e2e (`passe_e2e`).
 
+**Adotadas na Fase 5** e registradas no README: D01 (compra e venda), D11, D12, D13 (também na venda) e
+D16.
+
 ### Backend
 
 | # | Ponto em aberto | O que o enunciado diz | Proposta |
