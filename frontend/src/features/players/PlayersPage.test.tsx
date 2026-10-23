@@ -1,59 +1,27 @@
 import { fireEvent, screen, waitFor, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it } from 'vitest';
-import type { Club, Player } from '../../api/types.ts';
+import type { Player } from '../../api/types.ts';
 import { jsonResponse, stubApi } from '../../test/api-mock.ts';
+import {
+  AGUIAS,
+  MEIA_LUA,
+  OTTO_RANGEL,
+  playersPage,
+} from '../../test/fixtures.ts';
 import { renderWithProviders } from '../../test/render.tsx';
 import { PlayersPage } from './PlayersPage.tsx';
-
-const CLUB: Club = {
-  id: 1,
-  name: 'Águias FC',
-  acronym: 'AGU',
-  cash: 261.15,
-  squad_value: 37,
-  net_worth: 298.15,
-};
-
-const MEIA_LUA: Player = {
-  id: 2,
-  name: 'Meia Lua',
-  position: 'MEI',
-  agility: 85,
-  age: 25,
-  condition: 'MAL_CONDICIONADO',
-  base_value: 40,
-  market_value: 37,
-  pace: 70,
-  shooting: 68,
-  passing: 82,
-  dribbling: 79,
-  defending: 55,
-  physical: 64,
-  potential: 86,
-  overall: 75,
-  club_id: null,
-};
-
-const OTTO: Player = { ...MEIA_LUA, id: 3, name: 'Otto Rangel', club_id: 1 };
-
-function page(data: Player[]) {
-  return {
-    data,
-    meta: { page: 1, limit: 10, total_items: data.length, total_pages: 1 },
-  };
-}
 
 describe('PlayersPage', () => {
   let players: Player[];
 
   beforeEach(() => {
-    players = [MEIA_LUA, OTTO];
+    players = [MEIA_LUA, OTTO_RANGEL];
   });
 
   function stubPlayersApi() {
     return stubApi(({ method, url }) => {
       if (url.pathname.endsWith('/clubs')) {
-        return jsonResponse([CLUB]);
+        return jsonResponse([AGUIAS]);
       }
       if (method === 'DELETE') {
         players = players.filter((player) => player.id !== MEIA_LUA.id);
@@ -68,7 +36,7 @@ describe('PlayersPage', () => {
           400,
         );
       }
-      return jsonResponse(page(players));
+      return jsonResponse(playersPage(players));
     });
   }
 

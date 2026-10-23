@@ -28,6 +28,41 @@ export function listPlayers(
   return request<Paginated<Player>>('/players', { query: { ...query } });
 }
 
+export interface PlayerUpdate {
+  name: string;
+  position: Position;
+  agility: number;
+  age: number;
+}
+
+export interface PlayerInput extends PlayerUpdate {
+  pace: number;
+  shooting: number;
+  passing: number;
+  dribbling: number;
+  defending: number;
+  physical: number;
+  potential: number;
+}
+
+export function createPlayer(input: PlayerInput): Promise<Player> {
+  return request<Player>('/players', { method: 'POST', body: input });
+}
+
+export function updatePlayer(id: number, input: PlayerUpdate): Promise<Player> {
+  return request<Player>(`/players/${id}`, { method: 'PUT', body: input });
+}
+
+export function changePlayerCondition(
+  id: number,
+  condition: Condition,
+): Promise<Player> {
+  return request<Player>(`/players/${id}/condition`, {
+    method: 'PATCH',
+    body: { condition },
+  });
+}
+
 export function deletePlayer(id: number): Promise<void> {
   return request<void>(`/players/${id}`, { method: 'DELETE' });
 }

@@ -3,17 +3,23 @@ import type { PlayerFilters } from '../../api/players.ts';
 import type { Club, Player } from '../../api/types.ts';
 import { Button } from '../../components/Button.tsx';
 import { ConditionBadge } from '../../components/ConditionBadge.tsx';
-import { ConfirmDialog } from '../../components/ConfirmDialog.tsx';
 import { DataTable, type Column } from '../../components/DataTable.tsx';
 import { Feedback, type FeedbackMessage } from '../../components/Feedback.tsx';
 import { PageHeader } from '../../components/PageHeader.tsx';
 import { Pagination } from '../../components/Pagination.tsx';
 import { useClubs } from '../../hooks/useClubs.ts';
-import { useDeletePlayer, usePlayers } from '../../hooks/usePlayers.ts';
+import { usePlayers } from '../../hooks/usePlayers.ts';
 import { formatMoney } from '../../lib/format.ts';
+import { ConditionDialog } from './ConditionDialog.tsx';
+import { DeletePlayerDialog } from './DeletePlayerDialog.tsx';
 import { PlayerFiltersForm } from './PlayerFiltersForm.tsx';
+import { PlayerFormDialog } from './PlayerFormDialog.tsx';
 
 const PAGE_SIZE = 10;
+
+type PlayerDialogState =
+  | { kind: 'create' }
+  | { kind: 'edit' | 'condition' | 'delete'; player: Player };
 
 function totalLabel(total: number): string {
   return total === 1
@@ -33,11 +39,10 @@ export function PlayersPage() {
   const [filters, setFilters] = useState<PlayerFilters>({});
   const [page, setPage] = useState(1);
   const [feedback, setFeedback] = useState<FeedbackMessage | null>(null);
-  const [playerToDelete, setPlayerToDelete] = useState<Player | null>(null);
+  const [dialog, setDialog] = useState<PlayerDialogState | null>(null);
 
   const players = usePlayers({ ...filters, page, limit: PAGE_SIZE });
   const clubs = useClubs();
-  const deletePlayer = useDeletePlayer();
 
   const clubById = new Map((clubs.data ?? []).map((club) => [club.id, club]));
   const rows = players.data?.data;
@@ -48,22 +53,25 @@ export function PlayersPage() {
     setPage(1);
   }
 
-  function openDelete(player: Player) {
-    deletePlayer.reset();
+  function openDialog(next: PlayerDialogState) {
     setFeedback(null);
-    setPlayerToDelete(player);
+    setDialog(next);
   }
 
-  function confirmDelete(player: Player) {
-    deletePlayer.mutate(player.id, {
-      onSuccess: () => {
-        setFeedback({ kind: 'success', text: `${player.name} foi excluído.` });
-        setPlayerToDelete(null);
-        if (rows?.length === 1 && page > 1) {
-          setPage(page - 1);
-        }
-      },
-    });
+  function closeDialog() {
+    setDialog(null);
+  }
+
+  function showSuccess(text: string) {
+    setFeedback({ kind: 'success', text });
+    setDialog(null);
+  }
+
+  function handleDeleted(player: Player) {
+    showSuccess(`${player.name} foi excluído.`);
+    if (rows?.length === 1 && page > 1) {
+      setPage(page - 1);
+    }
   }
 
   const columns: Column<Player>[] = [
@@ -94,18 +102,46 @@ export function PlayersPage() {
     { header: 'Clube', cell: (player) => clubCell(player.club_id, clubById) },
     {
       header: 'Ações',
-      cell: (player) =>
-        player.club_id === null && (
-          <Button size="sm" variant="danger" onClick={() => openDelete(player)}>
-            Excluir
+      cell: (player) => (
+        <div className="flex gap-1">
+          <Button
+            size="sm"
+            variant="secondary"
+            onClick={() => openDialog({ kind: 'edit', player })}
+          >
+            Editar
           </Button>
-        ),
+          <Button
+            size="sm"
+            variant="secondary"
+            onClick={() => openDialog({ kind: 'condition', player })}
+          >
+            Condição
+          </Button>
+          {player.club_id === null && (
+            <Button
+              size="sm"
+              variant="danger"
+              onClick={() => openDialog({ kind: 'delete', player })}
+            >
+              Excluir
+            </Button>
+          )}
+        </div>
+      ),
     },
   ];
 
   return (
     <div className="space-y-4">
-      <PageHeader title="Jogadores" />
+      <PageHeader
+        title="Jogadores"
+        actions={
+          <Button onClick={() => openDialog({ kind: 'create' })}>
+            Cadastrar jogador
+          </Button>
+        }
+      />
       <PlayerFiltersForm clubs={clubs.data ?? []} onApply={applyFilters} />
       <Feedback message={feedback} onClose={() => setFeedback(null)} />
       <DataTable
@@ -125,18 +161,29 @@ export function PlayersPage() {
           onPageChange={setPage}
         />
       )}
-      {playerToDelete && (
-        <ConfirmDialog
-          title="Excluir jogador"
-          confirmLabel="Excluir"
-          isPending={deletePlayer.isPending}
-          error={deletePlayer.error}
-          onConfirm={() => confirmDelete(playerToDelete)}
-          onCancel={() => setPlayerToDelete(null)}
-        >
-          Excluir <strong>{playerToDelete.name}</strong>? Ele sai da lista de
-          jogadores.
-        </ConfirmDialog>
+      {dialog?.kind === 'create' && (
+        <PlayerFormDialog onClose={closeDialog} onSaved={showSuccess} />
+      )}
+      {dialog?.kind === 'edit' && (
+        <PlayerFormDialog
+          player={dialog.player}
+          onClose={closeDialog}
+          onSaved={showSuccess}
+        />
+      )}
+      {dialog?.kind === 'condition' && (
+        <ConditionDialog
+          player={dialog.player}
+          onClose={closeDialog}
+          onSaved={showSuccess}
+        />
+      )}
+      {dialog?.kind === 'delete' && (
+        <DeletePlayerDialog
+          player={dialog.player}
+          onClose={closeDialog}
+          onDeleted={() => handleDeleted(dialog.player)}
+        />
       )}
     </div>
   );
