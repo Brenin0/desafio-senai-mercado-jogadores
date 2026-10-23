@@ -4,7 +4,7 @@ import { IsBoolean, ValidateBy, ValidationArguments } from 'class-validator';
 import Decimal from 'decimal.js';
 import { parseDecimalAmount } from '../parsing/decimal-amount';
 import { MAX_INTEGER, parsePositiveInteger } from '../parsing/positive-integer';
-import { isSortList } from '../parsing/sort-list';
+import { isCommaList, isSortList } from '../parsing/comma-list';
 import { IsIntegerBetween } from './value.validators';
 
 /**
@@ -73,6 +73,21 @@ export function IsQuerySort(
         typeof value === 'string' && isSortList(value, accepted, maxCriteria),
       defaultMessage: () =>
         `$property aceita até ${maxCriteria} destes valores, separados por vírgula, sem espaços e sem repetir o campo: ${accepted.join(', ')}`,
+    },
+  });
+}
+
+/** Um ou mais valores aceitos, separados por vírgula, sem espaços e sem repetição. */
+export function IsQueryList(accepted: readonly string[]): PropertyDecorator {
+  return ValidateBy({
+    name: 'isQueryList',
+    constraints: [accepted],
+    validator: {
+      validate: (value: unknown) =>
+        typeof value === 'string' &&
+        isCommaList(value, accepted, accepted.length),
+      defaultMessage: () =>
+        `$property aceita um ou mais destes valores, separados por vírgula, sem espaços e sem repetição: ${accepted.join(', ')}`,
     },
   });
 }

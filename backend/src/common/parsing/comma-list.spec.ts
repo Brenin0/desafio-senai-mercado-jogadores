@@ -1,4 +1,4 @@
-import { isSortList } from './sort-list';
+import { isCommaList, isSortList } from './comma-list';
 
 const ACCEPTED = [
   'name',
@@ -34,5 +34,28 @@ describe('isSortList (RN07, sort de GET /players)', () => {
 
   it('com um critério só, recusa o segundo', () => {
     expect(isSortList('name,position', ACCEPTED, 1)).toBe(false);
+  });
+});
+
+describe('isCommaList (RN17 e RN18, type do histórico)', () => {
+  const TYPES = ['COMPRA', 'VENDA'];
+
+  it.each(['COMPRA', 'VENDA', 'COMPRA,VENDA', 'VENDA,COMPRA'])(
+    'aceita %s',
+    (text) => {
+      expect(isCommaList(text, TYPES, TYPES.length)).toBe(true);
+    },
+  );
+
+  it.each([
+    ['vazio', ''],
+    ['minúsculas', 'compra'],
+    ['caixa trocada em um dos valores', 'COMPRA,venda'],
+    ['repetição', 'COMPRA,COMPRA'],
+    ['vírgula no fim', 'COMPRA,'],
+    ['espaço depois da vírgula', 'COMPRA, VENDA'],
+    ['valor fora da lista', 'TROCA'],
+  ])('recusa %s: "%s"', (_, text) => {
+    expect(isCommaList(text, TYPES, TYPES.length)).toBe(false);
   });
 });

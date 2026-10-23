@@ -2,12 +2,14 @@ import { applyDecorators, BadRequestException, Type } from '@nestjs/common';
 import { IsOptional } from 'class-validator';
 import Decimal from 'decimal.js';
 import { createValidationPipe } from '../pipes/validation.pipe';
+import { IsBrasiliaDateTime } from './datetime.validators';
 import {
   IsNotGreaterThan,
   IsNotTrueWith,
   IsQueryBoolean,
   IsQueryDecimal,
   IsQueryInteger,
+  IsQueryList,
   IsQuerySort,
 } from './query.validators';
 import {
@@ -108,6 +110,18 @@ class FiltersDto {
   @IsOptional()
   @IsQuerySort(['name', 'value_asc', 'value_desc'], 2)
   sort: string = 'name';
+}
+
+class PurchaseDto {
+  @IsRequired()
+  @IsBrasiliaDateTime()
+  loyalty_until!: Date;
+}
+
+class HistoryFiltersDto {
+  @IsOptional()
+  @IsQueryList(['COMPRA', 'VENDA'])
+  type?: string;
 }
 
 describe('IsNormalizedText, HasWordCountBetween e HasNoDigits (V4 e Limites)', () => {
@@ -368,5 +382,90 @@ describe('Validadores de query (Filtros e query params)', () => {
     ).resolves.toEqual({
       refused: 'max_age deve ser um número inteiro de 16 a 45',
     });
+  });
+});
+
+describe('IsBrasiliaDateTime (RN01)', () => {
+  it('converte AAAA-MM-DDTHH:MM-03:00 para o instante certo, sem depender do fuso da máquina', async () => {
+    await expect(
+      validate(PurchaseDto, { loyalty_until: '2027-03-02T10:15-03:00' }),
+    ).resolves.toEqual({
+      accepted: { loyalty_until: new Date('2027-03-02T13:15:00Z') },
+    });
+  });
+
+  it.each(['2028-02-29T10:00-03:00', '2027-03-02T00:00-03:00'])(
+    'aceita %s (29 de fevereiro de ano bissexto e meia-noite)',
+    async (loyaltyUntil) => {
+      await expect(
+        validate(PurchaseDto, { loyalty_until: loyaltyUntil }),
+      ).resolves.toHaveProperty('accepted');
+    },
+  );
+
+  it.each([
+    ['sem o fuso', '2027-03-02T10:15'],
+    ['com Z', '2027-03-02T10:15Z'],
+    ['com +00:00', '2027-03-02T10:15+00:00'],
+    ['com -02:00', '2027-03-02T10:15-02:00'],
+    ['com -0300', '2027-03-02T10:15-0300'],
+    ['com segundos (formato de saída)', '2027-03-02T10:15:00-03:00'],
+    ['com espaço no lugar do T', '2027-03-02 10:15-03:00'],
+    ['com t minúsculo', '2027-03-02t10:15-03:00'],
+    ['sem os zeros à esquerda', '2027-3-2T10:15-03:00'],
+    ['30 de fevereiro', '2027-02-30T10:15-03:00'],
+    ['29 de fevereiro de 2027, que não é bissexto', '2027-02-29T10:15-03:00'],
+    ['24:00', '2027-03-02T24:00-03:00'],
+    ['23:60', '2027-03-02T23:60-03:00'],
+    ['mês 13', '2027-13-02T10:15-03:00'],
+    ['dia 00', '2027-03-00T10:15-03:00'],
+    ['número', 20270302],
+    ['texto vazio', ''],
+  ])('recusa data %s', async (_, loyaltyUntil) => {
+    await expect(
+      validate(PurchaseDto, { loyalty_until: loyaltyUntil }),
+    ).resolves.toEqual({
+      refused:
+        'loyalty_until deve ser uma data e hora que exista, no formato AAAA-MM-DDTHH:MM-03:00 (ex.: 2027-03-02T10:15-03:00)',
+    });
+  });
+
+  it.each([
+    ['ausente', {}],
+    ['nula', { loyalty_until: null }],
+  ])('V6: recusa data %s', async (_, body) => {
+    await expect(validate(PurchaseDto, body)).resolves.toEqual({
+      refused: 'loyalty_until é obrigatório',
+    });
+  });
+});
+
+describe('IsQueryList (RN17, type do histórico)', () => {
+  it.each(['COMPRA', 'VENDA', 'COMPRA,VENDA', 'VENDA,COMPRA'])(
+    'aceita type=%s',
+    async (type) => {
+      await expect(
+        validate(HistoryFiltersDto, { type }, 'query'),
+      ).resolves.toEqual({ accepted: { type } });
+    },
+  );
+
+  it.each([
+    'compra',
+    'COMPRA,venda',
+    'COMPRA,COMPRA',
+    'COMPRA,',
+    'COMPRA, VENDA',
+    '',
+  ])('recusa type=%s', async (type) => {
+    await expect(
+      validate(HistoryFiltersDto, { type }, 'query'),
+    ).resolves.toHaveProperty('refused');
+  });
+
+  it('D14: recusa type repetido, que chega como lista', async () => {
+    await expect(
+      validate(HistoryFiltersDto, { type: ['COMPRA', 'VENDA'] }, 'query'),
+    ).resolves.toHaveProperty('refused');
   });
 });
