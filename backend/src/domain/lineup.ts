@@ -13,7 +13,7 @@ export interface Lineup {
   players: Player[];
 }
 
-export interface Sectors {
+interface Sectors {
   defense: number;
   midfield: number;
   attack: number;
