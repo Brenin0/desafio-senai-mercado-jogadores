@@ -112,7 +112,9 @@ describe('PlayersPage', () => {
     expect(buttons).toHaveLength(1);
     fireEvent.click(buttons[0]);
     const dialog = screen.getByRole('dialog', { name: 'Excluir jogador' });
-    fireEvent.click(within(dialog).getByRole('button', { name: 'Excluir' }));
+    const confirm = within(dialog).getByRole('button', { name: 'Excluir' });
+    fireEvent.click(confirm);
+    fireEvent.click(confirm);
 
     expect(await screen.findByRole('status')).toHaveTextContent(
       'Meia Lua foi excluído.',

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link } from 'react-router';
 import type { ClubSort } from '../../api/clubs.ts';
 import type { Club } from '../../api/types.ts';
 import { Button } from '../../components/Button.tsx';
@@ -21,7 +22,12 @@ const COLUMNS: Column<Club>[] = [
   {
     header: 'Nome',
     cell: (club) => (
-      <span className="font-medium text-slate-900">{club.name}</span>
+      <Link
+        to={`/clubes/${club.id}`}
+        className="font-medium text-blue-700 hover:underline"
+      >
+        {club.name}
+      </Link>
     ),
   },
   { header: 'Sigla', cell: (club) => club.acronym },

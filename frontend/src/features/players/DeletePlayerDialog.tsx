@@ -18,9 +18,8 @@ export function DeletePlayerDialog({
     <ConfirmDialog
       title="Excluir jogador"
       confirmLabel="Excluir"
-      isPending={deletePlayer.isPending}
       error={deletePlayer.error}
-      onConfirm={() => deletePlayer.mutate(player.id, { onSuccess: onDeleted })}
+      onConfirm={() => deletePlayer.mutateAsync(player.id).then(onDeleted)}
       onCancel={onClose}
     >
       Excluir <strong>{player.name}</strong>? Ele sai da lista de jogadores.

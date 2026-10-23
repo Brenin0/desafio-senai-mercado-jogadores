@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link } from 'react-router';
 import type { PlayerFilters } from '../../api/players.ts';
 import type { Club, Player } from '../../api/types.ts';
 import { Button } from '../../components/Button.tsx';
@@ -33,7 +34,17 @@ function clubCell(clubId: number | null, clubById: Map<number, Club>) {
     return <span className="text-slate-500">Livre</span>;
   }
   const club = clubById.get(clubId);
-  return club ? <span title={club.name}>{club.acronym}</span> : '…';
+  return club ? (
+    <Link
+      to={`/clubes/${club.id}`}
+      title={club.name}
+      className="text-blue-700 hover:underline"
+    >
+      {club.acronym}
+    </Link>
+  ) : (
+    '…'
+  );
 }
 
 export function PlayersPage() {

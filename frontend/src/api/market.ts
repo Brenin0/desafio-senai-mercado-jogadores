@@ -1,5 +1,5 @@
 import { request } from './http.ts';
-import type { Purchase } from './types.ts';
+import type { Purchase, Sale } from './types.ts';
 
 export interface PurchaseInput {
   club_id: number;
@@ -14,4 +14,8 @@ export function buyPlayer(
     method: 'POST',
     body: input,
   });
+}
+
+export function sellPlayer(playerId: number): Promise<Sale> {
+  return request<Sale>(`/players/${playerId}/sell`, { method: 'POST' });
 }

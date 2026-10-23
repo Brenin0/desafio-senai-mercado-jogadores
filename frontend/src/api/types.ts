@@ -67,3 +67,25 @@ export interface Purchase extends Transaction {
   };
   club_cash: number;
 }
+
+export interface SquadPlayer extends Player {
+  contract: {
+    purchase_value: number;
+    loyalty_until: string;
+    remaining_days: number;
+    penalty_rate: number;
+  };
+}
+
+export interface ClubDetail extends Club {
+  players: SquadPlayer[];
+}
+
+export interface Sale extends Transaction {
+  profit: number;
+  purchase_value: number;
+  remaining_days: number;
+  penalty_rate: number;
+  contract_status: string;
+  club_cash: number;
+}
