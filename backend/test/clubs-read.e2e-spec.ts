@@ -103,7 +103,7 @@ describe('Consulta de clubes (2.2 e 2.2.2, RN11)', () => {
       await createClub('Gama SC', 'GSC');
       await createClub('Épsilon EC', 'EEC');
       await createClub('Delta FC', 'DFC');
-      const aguiasComAcento = await createClub('Águias FC', 'AGU');
+      const accentedAguiasId = await createClub('Águias FC', 'AGU');
       await createClub('Aguias FC', 'AFC');
 
       const response = await listClubs();
@@ -117,7 +117,7 @@ describe('Consulta de clubes (2.2 e 2.2.2, RN11)', () => {
         'Gama SC',
       ]);
       expect((response.body as ClubItem[])[0]).toEqual({
-        id: aguiasComAcento,
+        id: accentedAguiasId,
         name: 'Águias FC',
         acronym: 'AGU',
         cash: 300,
