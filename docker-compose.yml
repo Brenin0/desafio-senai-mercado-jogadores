@@ -18,5 +18,43 @@ services:
       retries: 12
       start_period: 10s
 
+  # Profile "app": sobe também a API e a interface (docker compose --profile app up -d --build --wait)
+  api:
+    profiles: ["app"]
+    build: ./backend
+    environment:
+      PORT: "3000"
+      FRONTEND_ORIGIN: http://localhost:5173
+      DATABASE_URL: postgresql://passe:passe@db:5432/passe?schema=public
+    ports:
+      - "3000:3000"
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1:3000/api/v1/standings"]
+      interval: 5s
+      timeout: 5s
+      retries: 24
+      start_period: 15s
+
+  web:
+    profiles: ["app"]
+    build:
+      context: ./frontend
+      args:
+        VITE_API_URL: http://localhost:3000
+    ports:
+      - "5173:5173"
+    depends_on:
+      api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1:5173/"]
+      interval: 5s
+      timeout: 5s
+      retries: 24
+      start_period: 5s
+
 volumes:
   db-data:
