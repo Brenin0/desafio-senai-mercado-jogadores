@@ -7,6 +7,7 @@ import { PlayersRepository } from '../players/players.repository';
 import { ListTransactionsQueryDto } from './dto/list-transactions-query.dto';
 import { TransactionHistoryResponseDto } from './dto/transaction-history-response.dto';
 import { toTransactionHistoryResponse } from './transaction.presenter';
+import { toTransactionsCsv } from './transactions-csv';
 import { TransactionsRepository } from './transactions.repository';
 
 @Injectable()
@@ -23,6 +24,14 @@ export class TransactionsService {
     query: ListTransactionsQueryDto,
   ): Promise<TransactionHistoryResponseDto> {
     return toTransactionHistoryResponse(await this.findFiltered(clubId, query));
+  }
+
+  /** RN18: o mesmo histórico, com os mesmos filtros e validações, em CSV. */
+  async exportCsv(
+    clubId: number,
+    query: ListTransactionsQueryDto,
+  ): Promise<string> {
+    return toTransactionsCsv(await this.findFiltered(clubId, query));
   }
 
   /**
