@@ -4,6 +4,7 @@ import type { QueryClient, QueryKey } from '@tanstack/react-query';
 export const queryKeys = {
   players: ['players'],
   clubs: ['clubs'],
+  transactions: ['transactions'],
 } as const;
 
 /** Depois de uma ação, pede de novo à API os recursos que ela mudou. */

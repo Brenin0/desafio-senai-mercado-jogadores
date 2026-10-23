@@ -42,3 +42,28 @@ export interface Club {
   squad_value: number;
   net_worth: number;
 }
+
+export type TransactionType = 'COMPRA' | 'VENDA';
+
+export interface Transaction {
+  id: number;
+  club_id: number;
+  player_id: number;
+  player_name: string;
+  type: TransactionType;
+  value: number;
+  fee: number;
+  penalty: number;
+  profit: number | null;
+  cash_change: number;
+  created_at: string;
+}
+
+export interface Purchase extends Transaction {
+  contract: {
+    purchase_value: number;
+    loyalty_until: string;
+    status: string;
+  };
+  club_cash: number;
+}

@@ -10,6 +10,7 @@ import { Pagination } from '../../components/Pagination.tsx';
 import { useClubs } from '../../hooks/useClubs.ts';
 import { usePlayers } from '../../hooks/usePlayers.ts';
 import { formatMoney } from '../../lib/format.ts';
+import { BuyDialog } from './BuyDialog.tsx';
 import { ConditionDialog } from './ConditionDialog.tsx';
 import { DeletePlayerDialog } from './DeletePlayerDialog.tsx';
 import { PlayerFiltersForm } from './PlayerFiltersForm.tsx';
@@ -19,7 +20,7 @@ const PAGE_SIZE = 10;
 
 type PlayerDialogState =
   | { kind: 'create' }
-  | { kind: 'edit' | 'condition' | 'delete'; player: Player };
+  | { kind: 'edit' | 'condition' | 'delete' | 'buy'; player: Player };
 
 function totalLabel(total: number): string {
   return total === 1
@@ -119,13 +120,21 @@ export function PlayersPage() {
             Condição
           </Button>
           {player.club_id === null && (
-            <Button
-              size="sm"
-              variant="danger"
-              onClick={() => openDialog({ kind: 'delete', player })}
-            >
-              Excluir
-            </Button>
+            <>
+              <Button
+                size="sm"
+                onClick={() => openDialog({ kind: 'buy', player })}
+              >
+                Comprar
+              </Button>
+              <Button
+                size="sm"
+                variant="danger"
+                onClick={() => openDialog({ kind: 'delete', player })}
+              >
+                Excluir
+              </Button>
+            </>
           )}
         </div>
       ),
@@ -177,6 +186,9 @@ export function PlayersPage() {
           onClose={closeDialog}
           onSaved={showSuccess}
         />
+      )}
+      {dialog?.kind === 'buy' && (
+        <BuyDialog player={dialog.player} onClose={closeDialog} />
       )}
       {dialog?.kind === 'delete' && (
         <DeletePlayerDialog
