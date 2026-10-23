@@ -77,6 +77,12 @@ export class ClubsRepository {
     return new Decimal(cash.toString());
   }
 
+  /** Todos os clubes, sem ordem (RN21: a classificação traz todos). */
+  async findAll(): Promise<Club[]> {
+    const rows = await this.prisma.club.findMany({ select: CLUB_COLUMNS });
+    return rows.map(toClub);
+  }
+
   /** Todos os clubes, cada um com os jogadores do elenco, sem ordem (RN11). */
   async findAllWithPlayers(): Promise<ClubWithPlayers[]> {
     const rows = await this.prisma.club.findMany({

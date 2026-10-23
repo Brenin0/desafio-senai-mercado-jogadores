@@ -7,10 +7,17 @@ import { LineupService } from './lineup.service';
 import { MatchesController } from './matches.controller';
 import { MatchesRepository } from './matches.repository';
 import { MatchesService } from './matches.service';
+import { StandingsController } from './standings.controller';
+import { StandingsService } from './standings.service';
 
 @Module({
   imports: [PlayersModule, ClubsModule, LineupDataModule],
-  controllers: [LineupController, MatchesController],
-  providers: [LineupService, MatchesService, MatchesRepository],
+  controllers: [LineupController, MatchesController, StandingsController],
+  providers: [
+    LineupService,
+    MatchesService,
+    StandingsService,
+    MatchesRepository,
+  ],
 })
 export class LeagueModule {}

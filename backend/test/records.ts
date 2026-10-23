@@ -1,8 +1,8 @@
 import { PrismaService } from '../src/prisma/prisma.service';
 
 /*
- * Gravação direta no banco do que ainda não tem endpoint (compra e escalação), para os testes
- * prepararem jogadores com clube, contrato e escalação.
+ * Gravação direta no banco, para os testes prepararem jogadores com clube, contrato e escalação sem
+ * passar pela compra, e partidas com um placar escolhido sem montar escalações sob medida.
  */
 
 export async function insertClub(
@@ -41,4 +41,24 @@ export async function addToLineup(
   playerId: number,
 ): Promise<void> {
   await prisma.lineupPlayer.create({ data: { clubId, playerId } });
+}
+
+/** Partida só com o placar, sem os duelos: a classificação lê apenas o placar de `partidas` (RN21). */
+export async function insertMatch(
+  prisma: PrismaService,
+  homeClubId: number,
+  awayClubId: number,
+  homeGoals: number,
+  awayGoals: number,
+): Promise<void> {
+  await prisma.match.create({
+    data: {
+      homeClubId,
+      awayClubId,
+      homeGoals,
+      awayGoals,
+      homeFormation: '2-1-1',
+      awayFormation: '2-1-1',
+    },
+  });
 }

@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { Formation } from '../domain/lineup';
 import { Match, MatchWithDuels } from '../domain/match';
 import { Duel } from '../domain/match-engine';
+import { PlayedMatch } from '../domain/standings';
 import { PrismaService } from '../prisma/prisma.service';
 import { DatabaseClient } from '../prisma/transaction-runner';
 import {
@@ -54,6 +55,18 @@ export class MatchesRepository {
       select: MATCH_COLUMNS,
     });
     return rows.map(toMatch);
+  }
+
+  /** RN21: o placar de todas as partidas, sem ordem, para a classificação. */
+  findScores(): Promise<PlayedMatch[]> {
+    return this.prisma.match.findMany({
+      select: {
+        homeClubId: true,
+        awayClubId: true,
+        homeGoals: true,
+        awayGoals: true,
+      },
+    });
   }
 
   /** RN21: a partida com os 6 duelos, na ordem; null se não existe. */
