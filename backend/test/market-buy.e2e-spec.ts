@@ -202,6 +202,31 @@ describe('Compra de jogadores (2.3.1, RN12 a RN14)', () => {
     );
   });
 
+  it('B13: o limite de 50% usa o caixa do momento de cada compra, numa sequência', async () => {
+    const clubId = await api.createClub('Águias FC', 'AGU');
+    const [first, tooExpensive, fits] = [
+      await api.createPlayer({ name: 'Ana Lima' }),
+      await api.createPlayer({ name: 'Bia Lima' }),
+      await api.createPlayer({ name: 'Caio Lima' }),
+    ];
+    await api.setBaseValue(first, '140.00');
+    await api.setBaseValue(tooExpensive, '76.50');
+    await api.setBaseValue(fits, '72.86');
+
+    await expect(buy(first, clubId)).resolves.toMatchObject({
+      status: 200,
+      body: { fee: 7, cash_change: -147, club_cash: 153 },
+    });
+    expectRefusal(await buy(tooExpensive, clubId), 409);
+    await expect(buy(fits, clubId)).resolves.toMatchObject({
+      status: 200,
+      body: { fee: 3.64, cash_change: -76.5, club_cash: 76.5 },
+    });
+    await expect(api.findClub(clubId)).resolves.toMatchObject({
+      body: { cash: 76.5, squad_value: 212.86, net_worth: 289.36 },
+    });
+  });
+
   describe('B11: compra recusada, sem gravar nada', () => {
     it('409: jogador que já está no elenco de outro clube', async () => {
       const ownerId = await api.createClub('Águias FC', 'AGU');
