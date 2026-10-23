@@ -102,3 +102,12 @@ export interface TransactionHistory {
   data: Transaction[];
   summary: TransactionSummary;
 }
+
+export type Formation = '3-1' | '2-2' | '2-1-1' | '1-2-1';
+
+export interface Lineup {
+  club_id: number;
+  formation: Formation | null;
+  complete: boolean;
+  players: Player[];
+}

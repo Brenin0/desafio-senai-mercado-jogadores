@@ -43,6 +43,7 @@ export function useSellPlayer() {
         queryKeys.players,
         queryKeys.clubs,
         queryKeys.transactions,
+        queryKeys.lineups,
       ]),
   });
 }

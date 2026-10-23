@@ -5,6 +5,7 @@ export const queryKeys = {
   players: ['players'],
   clubs: ['clubs'],
   transactions: ['transactions'],
+  lineups: ['lineups'],
 } as const;
 
 /** Depois de uma ação, pede de novo à API os recursos que ela mudou. */

@@ -38,7 +38,11 @@ export function useUpdatePlayer() {
     mutationFn: ({ id, input }: { id: number; input: PlayerUpdate }) =>
       updatePlayer(id, input),
     onSuccess: () =>
-      invalidate(queryClient, [queryKeys.players, queryKeys.clubs]),
+      invalidate(queryClient, [
+        queryKeys.players,
+        queryKeys.clubs,
+        queryKeys.lineups,
+      ]),
   });
 }
 
@@ -48,7 +52,11 @@ export function useChangePlayerCondition() {
     mutationFn: ({ id, condition }: { id: number; condition: Condition }) =>
       changePlayerCondition(id, condition),
     onSuccess: () =>
-      invalidate(queryClient, [queryKeys.players, queryKeys.clubs]),
+      invalidate(queryClient, [
+        queryKeys.players,
+        queryKeys.clubs,
+        queryKeys.lineups,
+      ]),
   });
 }
 

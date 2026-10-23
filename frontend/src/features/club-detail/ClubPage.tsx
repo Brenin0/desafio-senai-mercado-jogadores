@@ -4,14 +4,16 @@ import { PageHeader } from '../../components/PageHeader.tsx';
 import { Tabs } from '../../components/Tabs.tsx';
 import { useClub } from '../../hooks/useClubs.ts';
 import { formatMoney } from '../../lib/format.ts';
+import { LineupSection } from './LineupSection.tsx';
 import { SquadSection } from './SquadSection.tsx';
 import { TransactionsSection } from './TransactionsSection.tsx';
 
-type ClubTab = 'squad' | 'history';
+type ClubTab = 'squad' | 'history' | 'lineup';
 
 const TABS: { id: ClubTab; label: string }[] = [
   { id: 'squad', label: 'Elenco' },
   { id: 'history', label: 'Histórico' },
+  { id: 'lineup', label: 'Escalação' },
 ];
 
 function Stat({ label, value }: { label: string; value: number | undefined }) {
@@ -25,7 +27,7 @@ function Stat({ label, value }: { label: string; value: number | undefined }) {
   );
 }
 
-/** Página do clube: caixa, valor do elenco, patrimônio e as abas do elenco e do histórico. */
+/** Página do clube: caixa, valor do elenco, patrimônio e as abas do elenco, do histórico e da escalação. */
 export function ClubPage() {
   const clubId = Number(useParams().id);
   const club = useClub(clubId);
@@ -55,6 +57,9 @@ export function ClubPage() {
         />
       )}
       {tab === 'history' && <TransactionsSection clubId={clubId} />}
+      {tab === 'lineup' && (
+        <LineupSection clubId={clubId} squad={club.data?.players ?? []} />
+      )}
     </div>
   );
 }
