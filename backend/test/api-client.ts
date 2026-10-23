@@ -102,5 +102,11 @@ export function apiClient(app: NestExpressApplication) {
 
     findLineup: (clubId: number | string) =>
       request(server()).get(`/api/v1/clubs/${clubId}/lineup`),
+
+    playMatch: (body: object) =>
+      request(server()).post('/api/v1/matches').send(body),
+
+    findMatch: (matchId: number | string) =>
+      request(server()).get(`/api/v1/matches/${matchId}`),
   };
 }
