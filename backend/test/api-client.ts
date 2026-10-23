@@ -58,6 +58,12 @@ export function apiClient(app: NestExpressApplication) {
     buy: (playerId: number | string, body: object) =>
       request(server()).post(`/api/v1/players/${playerId}/buy`).send(body),
 
+    sell: (playerId: number | string) =>
+      request(server()).post(`/api/v1/players/${playerId}/sell`),
+
+    deletePlayer: (playerId: number) =>
+      request(server()).delete(`/api/v1/players/${playerId}`),
+
     findPlayer: (playerId: number) =>
       request(server()).get(`/api/v1/players/${playerId}`),
 

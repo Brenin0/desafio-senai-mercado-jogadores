@@ -6,6 +6,7 @@ import { clearDatabase } from './database';
 import { expectRefusal } from './expectations';
 import { MEIA_LUA } from './players.fixtures';
 import { insertClub, signPlayer } from './records';
+import { TestClock } from './test-clock';
 
 /** 2026-11-05T16:40-03:00 */
 const NOW = new Date('2026-11-05T19:40:00Z');
@@ -15,7 +16,7 @@ describe('Exclusão lógica de jogadores (2.1.6, RN09)', () => {
   let prisma: PrismaService;
 
   beforeAll(async () => {
-    app = await createTestApp({ now: NOW });
+    app = await createTestApp({ clock: new TestClock(NOW) });
     prisma = app.get(PrismaService);
   });
 

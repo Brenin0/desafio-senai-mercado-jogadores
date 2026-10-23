@@ -1,8 +1,10 @@
 import Decimal from 'decimal.js';
 import { ActiveContract, ACTIVE_CONTRACT_STATUS } from '../domain/contract';
 import { formatBrasiliaDateTime } from '../domain/datetime';
+import { SaleEvaluation } from '../domain/sale';
 import { Transaction } from '../domain/transaction';
 import { PurchaseResponseDto } from './dto/purchase-response.dto';
+import { SaleResponseDto } from './dto/sale-response.dto';
 import { TransactionResponseDto } from './dto/transaction-response.dto';
 
 /** Transação das respostas, com os valores e o nome gravados no momento da operação (RN17). */
@@ -21,6 +23,23 @@ export function toTransactionResponse(
     profit: transaction.profit && transaction.profit.toNumber(),
     cash_change: transaction.cashChange.toNumber(),
     created_at: formatBrasiliaDateTime(transaction.createdAt),
+  };
+}
+
+/** Resposta da venda (2.3.2): a transação VENDA, com o cálculo da multa e o caixa depois da venda. */
+export function toSaleResponse(
+  transaction: Transaction,
+  sale: SaleEvaluation,
+  purchaseValue: Decimal,
+  clubCash: Decimal,
+): SaleResponseDto {
+  return {
+    ...toTransactionResponse(transaction),
+    purchase_value: purchaseValue.toNumber(),
+    remaining_days: sale.remainingDays,
+    penalty_rate: sale.penaltyRate,
+    contract_status: sale.contractStatus,
+    club_cash: clubCash.toNumber(),
   };
 }
 

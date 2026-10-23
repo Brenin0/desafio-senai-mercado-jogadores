@@ -114,6 +114,22 @@ export class PlayersRepository {
     return count === 1;
   }
 
+  /**
+   * RN16: o jogador volta a ficar livre só se ainda estiver no clube que vende; devolve false se
+   * outro pedido o vendeu antes.
+   */
+  async releaseFromClub(
+    id: number,
+    clubId: number,
+    db: DatabaseClient,
+  ): Promise<boolean> {
+    const { count } = await db.player.updateMany({
+      where: { id, clubId },
+      data: { clubId: null },
+    });
+    return count === 1;
+  }
+
   /** RN09: exclusão lógica; nada é apagado do banco. */
   async markDeleted(id: number, deletedAt: Date): Promise<void> {
     await this.prisma.player.update({ where: { id }, data: { deletedAt } });

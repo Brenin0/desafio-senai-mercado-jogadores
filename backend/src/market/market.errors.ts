@@ -8,6 +8,9 @@ export const LOYALTY_OUT_OF_RANGE =
 export const PLAYER_NOT_FREE =
   'O jogador não está livre: já está no elenco de um clube.';
 
+export const FREE_PLAYER_NOT_SELLABLE =
+  'Jogador livre não pode ser vendido: ele não está no elenco de nenhum clube.';
+
 export const REBUY_FORBIDDEN =
   'O clube não pode comprar um jogador que ele mesmo já vendeu.';
 

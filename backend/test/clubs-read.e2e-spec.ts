@@ -6,6 +6,7 @@ import { clearDatabase } from './database';
 import { expectRefusal } from './expectations';
 import { MEIA_LUA, MEIA_LUA_RESPONSE } from './players.fixtures';
 import { signPlayer } from './records';
+import { TestClock } from './test-clock';
 
 /** Momento da compra do exemplo 2.3.1: 2026-11-02T10:15-03:00. */
 const NOW = new Date('2026-11-02T13:15:00Z');
@@ -30,7 +31,7 @@ describe('Consulta de clubes (2.2 e 2.2.2, RN11)', () => {
   let prisma: PrismaService;
 
   beforeAll(async () => {
-    app = await createTestApp({ now: NOW });
+    app = await createTestApp({ clock: new TestClock(NOW) });
     prisma = app.get(PrismaService);
   });
 

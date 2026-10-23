@@ -60,15 +60,18 @@ export class ClubsRepository {
     return db.player.count({ where: { clubId, deletedAt: null } });
   }
 
-  /** RN12: desconta o custo da compra do caixa e devolve o caixa novo. */
-  async debitCash(
+  /**
+   * RN17: o caixa muda só pela variação de uma compra (negativa) ou de uma venda (positiva); devolve
+   * o caixa novo.
+   */
+  async applyCashChange(
     id: number,
-    amount: Decimal,
+    cashChange: Decimal,
     db: DatabaseClient,
   ): Promise<Decimal> {
     const { cash } = await db.club.update({
       where: { id },
-      data: { cash: { decrement: amount } },
+      data: { cash: { increment: cashChange } },
       select: { cash: true },
     });
     return new Decimal(cash.toString());

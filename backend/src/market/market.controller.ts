@@ -10,6 +10,7 @@ import { ErrorResponseDto } from '../common/http/error-response.dto';
 import { PlayerIdParam } from '../players/player-id.param';
 import { BuyPlayerDto } from './dto/buy-player.dto';
 import { PurchaseResponseDto } from './dto/purchase-response.dto';
+import { SaleResponseDto } from './dto/sale-response.dto';
 import { MarketService } from './market.service';
 
 @ApiTags('Mercado')
@@ -39,5 +40,23 @@ export class MarketController {
     @Body() body: BuyPlayerDto,
   ): Promise<PurchaseResponseDto> {
     return this.market.buy(id, body);
+  }
+
+  @Post(':id/sell')
+  @HttpCode(HttpStatus.OK)
+  @ApiOkResponse({
+    type: SaleResponseDto,
+    description: 'Venda pelo clube atual do jogador; o pedido não tem corpo',
+  })
+  @ApiNotFoundResponse({
+    type: ErrorResponseDto,
+    description: 'Jogador inexistente ou excluído',
+  })
+  @ApiConflictResponse({
+    type: ErrorResponseDto,
+    description: 'Jogador livre (sem clube)',
+  })
+  sell(@PlayerIdParam() id: number): Promise<SaleResponseDto> {
+    return this.market.sell(id);
   }
 }

@@ -13,6 +13,8 @@ import { isLoyaltyUntilAllowed } from '../domain/contract';
 import { calculateMarketValue } from '../domain/market-value';
 import { Player } from '../domain/player';
 import { evaluatePurchase } from '../domain/purchase-fee';
+import { evaluateSale } from '../domain/sale';
+import { LineupRepository } from '../league/lineup.repository';
 import { PLAYER_NOT_FOUND } from '../players/player.errors';
 import { PlayersRepository } from '../players/players.repository';
 import {
@@ -22,14 +24,16 @@ import {
 import { ContractsRepository } from './contracts.repository';
 import { BuyPlayerDto } from './dto/buy-player.dto';
 import { PurchaseResponseDto } from './dto/purchase-response.dto';
+import { SaleResponseDto } from './dto/sale-response.dto';
 import {
   costAboveLimitMessage,
+  FREE_PLAYER_NOT_SELLABLE,
   LOYALTY_OUT_OF_RANGE,
   PLAYER_NOT_FREE,
   REBUY_FORBIDDEN,
   SQUAD_FULL,
 } from './market.errors';
-import { toPurchaseResponse } from './transaction.presenter';
+import { toPurchaseResponse, toSaleResponse } from './transaction.presenter';
 import { TransactionsRepository } from './transactions.repository';
 
 @Injectable()
@@ -39,6 +43,7 @@ export class MarketService {
     private readonly clubs: ClubsRepository,
     private readonly contracts: ContractsRepository,
     private readonly transactions: TransactionsRepository,
+    private readonly lineups: LineupRepository,
     private readonly transaction: TransactionRunner,
     private readonly clock: Clock,
   ) {}
@@ -75,9 +80,10 @@ export class MarketService {
       if (!(await this.players.signForClub(player.id, club.id, db))) {
         throw new ConflictException(PLAYER_NOT_FREE);
       }
-      const clubCash = await this.clubs.debitCash(
+      const cashChange = purchase.totalCost.negated();
+      const clubCash = await this.clubs.applyCashChange(
         club.id,
-        purchase.totalCost,
+        cashChange,
         db,
       );
       const contract = await this.contracts.createActive(
@@ -100,12 +106,71 @@ export class MarketService {
           fee: purchase.fee,
           penalty: new Decimal(0),
           profit: null,
-          cashChange: purchase.totalCost.negated(),
+          cashChange,
           createdAt: now,
         },
         db,
       );
       return toPurchaseResponse(transaction, contract, clubCash);
+    });
+  }
+
+  /**
+   * RN15 e RN16: venda pelo clube atual, pelo valor de mercado do momento, com multa por fidelidade
+   * e comissão sobre o lucro. Numa única operação: credita o caixa, deixa o jogador livre, fecha o
+   * contrato, grava a VENDA e tira o jogador da escalação (RN19).
+   */
+  async sell(playerId: number): Promise<SaleResponseDto> {
+    const now = this.clock.now();
+    return this.transaction.run(async (db) => {
+      const player = await this.players.findActiveById(playerId, db);
+      if (!player) {
+        throw new NotFoundException(PLAYER_NOT_FOUND);
+      }
+      const { clubId } = player;
+      if (clubId === null) {
+        throw new ConflictException(FREE_PLAYER_NOT_SELLABLE);
+      }
+      // Libera o jogador antes de ler o contrato: numa venda simultânea, só uma passa daqui.
+      if (!(await this.players.releaseFromClub(player.id, clubId, db))) {
+        throw new ConflictException(FREE_PLAYER_NOT_SELLABLE);
+      }
+      const contract = await this.contracts.findActive(player.id, clubId, db);
+      const marketValue = calculateMarketValue(player);
+      const sale = evaluateSale({
+        purchaseValue: contract.purchaseValue,
+        marketValue,
+        loyaltyUntil: contract.loyaltyUntil,
+        now,
+      });
+      await this.lineups.removePlayer(player.id, db);
+      await this.contracts.close(contract.id, sale.contractStatus, now, db);
+      const clubCash = await this.clubs.applyCashChange(
+        clubId,
+        sale.credit,
+        db,
+      );
+      const transaction = await this.transactions.create(
+        {
+          clubId,
+          playerId: player.id,
+          playerName: player.name,
+          type: 'VENDA',
+          value: marketValue,
+          fee: sale.commission,
+          penalty: sale.penalty,
+          profit: sale.profit,
+          cashChange: sale.credit,
+          createdAt: now,
+        },
+        db,
+      );
+      return toSaleResponse(
+        transaction,
+        sale,
+        contract.purchaseValue,
+        clubCash,
+      );
     });
   }
 

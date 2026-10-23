@@ -5,6 +5,7 @@ import { apiClient, toDateTimeInput } from './api-client';
 import { createTestApp } from './create-test-app';
 import { clearDatabase } from './database';
 import { expectRefusal } from './expectations';
+import { TestClock } from './test-clock';
 
 /** Momento da compra de 2.3.1: 2026-11-02T10:15-03:00. */
 const NOW = new Date('2026-11-02T13:15:00Z');
@@ -18,7 +19,7 @@ describe('Compra de jogadores (2.3.1, RN12 a RN14)', () => {
   let api: ReturnType<typeof apiClient>;
 
   beforeAll(async () => {
-    app = await createTestApp({ now: NOW });
+    app = await createTestApp({ clock: new TestClock(NOW) });
     prisma = app.get(PrismaService);
     api = apiClient(app);
   });
